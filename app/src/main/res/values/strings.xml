@@ -1,0 +1,38 @@
+<resources>
+    <string name="app_name">SDK Application</string>
+
+    <string name="connect">Connect</string>
+    <string name="disconnect">Disconnect</string>
+    <string name="start">Start</string>
+    <string name="scan">Find a device</string>
+    <string name="scanAll">Find all devices</string>
+    <string name="cancel">Cancel</string>
+
+    <string name="device_name">Enter a device name</string>
+    <string name="start_streaming">Start Streaming</string>
+    <string name="stop_streaming">Stop Streaming</string>
+    <string name="read_battery">Get Battery Level</string>
+
+    <string name="connected_to">CONNECTED TO </string>
+    <string name="welcome">WELCOME</string>
+
+    <string name="scan_in_progress">Scan in progress </string>
+    <string name="connect_in_progress">Connection in progress </string>
+
+    <string name="scan_failed">Impossible to find devices </string>
+    <string name="find_first_available_headset">The application is looking for the first available headset</string>
+    <string name="cancel_failed">Cancel encountered a problem </string>
+    <string name="connect_failed">Impossible to connect to </string>
+    <string name="disconnect_failed">Impossible to disconnect from </string>
+    <string name="wrong_device_name">Wrong name : must contains 10 digits </string>
+    <string name="disconnected_headset">The headset have been disconnected </string>
+
+    <string name="title_graph_eeg">Your signal </string>
+
+    <string name="channel_1_qc">Channel 1 Quality : </string>
+    <string name="channel_2_qc">Channel 2 Quality : </string>
+    <string name="channel1">Channel 1</string>
+    <string name="channel2">Channel 2</string>
+    <string name="error_read_battery">An error occured : impossible to get the battery level</string>
+
+</resources>

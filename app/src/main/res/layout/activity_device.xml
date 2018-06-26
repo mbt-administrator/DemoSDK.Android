@@ -1,0 +1,246 @@
+<?xml version="1.0" encoding="utf-8"?>
+<android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:custom="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <TextView
+        android:id="@+id/titleConnect"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:background="@color/light_blue"
+        android:gravity="bottom|center_horizontal"
+        android:text="@string/connected_to"
+        android:textColor="@color/white"
+        android:textSize="22sp"
+        app:layout_constraintBottom_toBottomOf="@+id/guidelineBottomTitle"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <TextView
+        android:id="@+id/deviceNameTextView"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:background="@color/light_blue"
+        android:gravity="top"
+        android:text=""
+        android:textAlignment="center"
+
+        android:textSize="18sp"
+        app:layout_constraintTop_toBottomOf="@+id/titleConnect" />
+
+    <Button
+        android:id="@+id/readBatteryButton"
+        style="@style/Base.Widget.AppCompat.Button.Small"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:text="@string/read_battery"
+        android:textColor="@color/white"
+        android:textSize="12sp"
+
+        app:layout_constraintTop_toTopOf="@+id/guidelineTopButton"
+        app:layout_constraintBottom_toBottomOf="@+id/guidelineBottomButton"
+        app:layout_constraintEnd_toEndOf="@+id/guidelineEndScanButton"
+        app:layout_constraintStart_toStartOf="@+id/guidelineStart" />
+
+    <Button
+        android:id="@+id/disconnectButton"
+        style="@style/Base.Widget.AppCompat.Button.Small"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:elevation="10dp"
+        android:text="@string/disconnect"
+        android:textColor="@color/white"
+
+        android:textSize="12sp"
+        app:layout_constraintTop_toTopOf="@+id/guidelineTopButton"
+        app:layout_constraintBottom_toTopOf="@+id/guidelineBottomButton"
+        app:layout_constraintEnd_toEndOf="@+id/guidelineEnd"
+        app:layout_constraintStart_toStartOf="@+id/guidelineStartDisconnectButton"
+        />
+
+
+    <LinearLayout
+        android:id="@+id/channels"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:background="@color/light_blue"
+        android:gravity="center_vertical|center_horizontal"
+        android:orientation="horizontal"
+
+        app:layout_constraintBottom_toBottomOf="@id/guidelineBottomQuality"
+        app:layout_constraintEnd_toEndOf="@+id/guidelineEnd"
+        app:layout_constraintStart_toStartOf="@+id/guidelineStart"
+        app:layout_constraintTop_toTopOf="@id/guidelineTopQuality">
+
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/titleEEGGraph"
+        android:layout_width="wrap_content"
+        android:layout_height="0dp"
+        android:text="@string/title_graph_eeg"
+        android:textColor="@color/white"
+        android:gravity="center_vertical"
+        android:textSize="18sp"
+
+        app:layout_constraintBottom_toBottomOf="@+id/guidelineBottomQuality"
+        app:layout_constraintEnd_toEndOf="@+id/guidelineEnd"
+        app:layout_constraintStart_toStartOf="@+id/guidelineStart"
+        app:layout_constraintTop_toTopOf="@id/guidelineTopQuality" />
+
+    <TextView
+        android:id="@+id/channel_1_quality"
+        android:layout_width="wrap_content"
+        android:layout_height="0dp"
+        android:text="@string/channel_1_qc"
+        android:textColor="@color/white"
+        android:gravity="center_vertical"
+        android:textSize="18sp"
+        android:visibility="gone"
+
+        app:layout_constraintBottom_toBottomOf="@+id/guidelineBottomQuality"
+        app:layout_constraintEnd_toStartOf="@+id/guidelineEndScanButton"
+        app:layout_constraintTop_toTopOf="@id/guidelineTopQuality" />
+
+    <TextView
+        android:id="@+id/channel_2_quality"
+        android:layout_width="wrap_content"
+        android:layout_height="0dp"
+        android:text="@string/channel_2_qc"
+        android:textColor="@color/white"
+        android:textSize="18sp"
+        android:gravity="center_vertical"
+        android:visibility="gone"
+
+
+        app:layout_constraintBottom_toBottomOf="@+id/guidelineBottomQuality"
+        app:layout_constraintStart_toStartOf="@+id/guidelineStartDisconnectButton"
+        app:layout_constraintTop_toTopOf="@id/guidelineTopQuality" />
+
+    <com.github.mikephil.charting.charts.LineChart
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:id="@+id/eegGraph"
+
+        app:layout_constraintTop_toBottomOf="@id/channels"
+        app:layout_constraintStart_toStartOf="@+id/guidelineStart"
+        app:layout_constraintEnd_toEndOf="@+id/guidelineEnd"
+        app:layout_constraintBottom_toBottomOf="@id/guidelineBottomChannels"
+        />
+
+
+    <Button
+        android:id="@+id/startStopStreamingButton"
+        style="@style/Base.Widget.AppCompat.Button.Small"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:text="@string/start_streaming"
+        android:textColor="@color/white"
+
+        android:textSize="12sp"
+        app:layout_constraintBottom_toBottomOf="@+id/guidelineBottomStartStop"
+        app:layout_constraintEnd_toEndOf="@+id/guidelineStartStartStop"
+        app:layout_constraintStart_toStartOf="@+id/guidelineEndStartStop"
+        app:layout_constraintTop_toTopOf="@+id/guidelineBottomChannels" />
+
+    <!-- VERTICAL GUIDELINES-->
+
+
+    <android.support.constraint.Guideline
+        android:id="@+id/guidelineStart"
+        android:layout_width="1dp"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        custom:layout_constraintGuide_percent="0.1" />
+
+    <android.support.constraint.Guideline
+        android:id="@+id/guidelineEndScanButton"
+        android:layout_width="1dp"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        custom:layout_constraintGuide_percent="0.47" />
+
+    <android.support.constraint.Guideline
+        android:id="@+id/guidelineStartDisconnectButton"
+        android:layout_width="1dp"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        custom:layout_constraintGuide_percent="0.53" />
+
+    <android.support.constraint.Guideline
+        android:id="@+id/guidelineEndStartStop"
+        android:layout_width="1dp"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        custom:layout_constraintGuide_percent="0.3" />
+
+    <android.support.constraint.Guideline
+        android:id="@+id/guidelineStartStartStop"
+        android:layout_width="1dp"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        custom:layout_constraintGuide_percent="0.7" />
+
+    <android.support.constraint.Guideline
+        android:id="@+id/guidelineEnd"
+        android:layout_width="1dp"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        custom:layout_constraintGuide_percent="0.9" />
+
+
+    <!-- HORIZONTAL GUIDELINES-->
+
+    <android.support.constraint.Guideline
+        android:id="@+id/guidelineBottomTitle"
+        android:layout_width="1dp"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        custom:layout_constraintGuide_percent="0.06" />
+
+    <android.support.constraint.Guideline
+        android:id="@+id/guidelineTopButton"
+        android:layout_width="1dp"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        custom:layout_constraintGuide_percent="0.15" />
+
+    <android.support.constraint.Guideline
+        android:id="@+id/guidelineBottomButton"
+        android:layout_width="1dp"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        custom:layout_constraintGuide_percent="0.25" />
+
+    <android.support.constraint.Guideline
+        android:id="@+id/guidelineTopQuality"
+        android:layout_width="1dp"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        app:layout_constraintGuide_begin="307dp"
+        custom:layout_constraintGuide_percent="0.3" />
+
+    <android.support.constraint.Guideline
+        android:id="@+id/guidelineBottomQuality"
+        android:layout_width="1dp"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        custom:layout_constraintGuide_percent="0.38" />
+
+    <android.support.constraint.Guideline
+        android:id="@+id/guidelineBottomChannels"
+        android:layout_width="1dp"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        custom:layout_constraintGuide_percent="0.9" />
+
+    <android.support.constraint.Guideline
+        android:id="@+id/guidelineBottomStartStop"
+        android:layout_width="1dp"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        custom:layout_constraintGuide_percent="0.99" />
+
+
+</android.support.constraint.ConstraintLayout>
