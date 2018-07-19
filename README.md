@@ -3,25 +3,18 @@
 
 
 ## I. Overview 
-
+----
 This document aims at helping you to install and use the My Brain Technologies’ SDK in your own mobile project. It is arranged in a way to guide you through the various steps in your development process. We recommend following each of the steps outlined below and reading the documentation in the order displayed.
  
 **What is the myBrain Technologies’ SDK ?** 
-
 The myBrain Technologies’ SDK is a closed source library developed by My Brain Technologies. Its main purpose is to allow the development of external Android applications connected to myBrain Technologies’ electroencephalography headsets.  It also provides code examples, and technical and use case documentation for developers.
 
 **What is electroencephalography  ?** 
-
-Electroencephalography
-(also known as EEG) is a technique used to measure the electrical activity in the brain. Brain cells communicate with each other through electrical impulses that fluctuate rhythmically in distinct patterns.
-----
+Electroencephalography (also known as EEG) is a technique used to measure the electrical activity in the brain. Brain cells communicate with each other through electrical impulses that fluctuate rhythmically in distinct patterns.
 
 **What are the myBrain Technologies’ headsets ?**
-
 My Brain Technologies’ headsets includes Melomind and VPro headsets:
-
 * Melomind is an audio headset composed of 2 electrodes that record electrical activity of the brain. These 2 channels of EEG acquisition are located on P3 and P4 parietal position.
-
 * VPro is a headset composed of 8 electrodes that record electrical activity of the brain. These channels of EEG acquisition can be located at customized position of the brain
 
 This library is currently distributed as a .aar file. Its content is obfuscated. Only the public content is accessible to external applications. 
@@ -29,6 +22,7 @@ This library is currently distributed as a .aar file. Its content is obfuscated.
  To this day, this document and the associated SDK are available for Android plateform. An iOS version will be soon available.
 
 ## II.  Versions
+----
 The current version of the SDK is 2.0.0. Further updates will be released in the following months with more features, but don’t try to use the 1.0.0 version, it has been removed. 
 
 Using the My Brain Technologies’ SDK requires to install an IDE for developing Android applications. 
@@ -40,6 +34,7 @@ The minimum Bluetooth version of the Android device (smartphone or tablet) requi
 
  
 ## III. Features
+----
 
 The main features offered by the SDK are listed below. 
 
@@ -58,7 +53,9 @@ The main features offered by the SDK are listed below.
 * Stopping streaming to stop receiving EEG data
 * Processing of the EEG signal acquired by the headset, that includes a conversion of the EEG raw data acquired into user-readable EEG data values.
 
+
 ## IV.  Tutorial
+----
 
 This tutorial contains instructions on how to create your own project, install the SDK and use its features. It assumes that you are using the Android Studio development environment and a supported Android device.
 
@@ -89,7 +86,7 @@ For using the SDK, you must register for a personal set of credentials and speci
 
 _Note: The access to the SDK will be blocked if you don’t get your personal set of credentials._
 
-To do so, send an email at [support@mybraintech.com](support@mybraintech.com) that includes the user name and email you want to use for your account creation. We will send you a confirmation email if the user name is not already taken with your password.
+To do so, send an email at **support@mybraintech.com** that includes the user name and email you want to use for your account creation. We will send you a confirmation email if the user name is not already taken with your password.
 Keep your login and password safe. You’ll need them to access to the library.
 
 ### 2.	How to install the SDK 
@@ -118,7 +115,7 @@ Inside your app *build.gradle* file, add the following block of code
 Add the following dependency to your dependencies list. If the ‘2.0.0’ version is not the last available version, replace ‘2.0.0’ with the last version of the SDK:
 
 
-    implementation 'com.mybraintech:sdk-lite:2.0.0
+    implementation 'mybraintech.com:sdk-lite:2.0.0
 
 
 Build with ./gradlew build command or “Sync now” option on Android Studio.
@@ -165,7 +162,7 @@ The application is now set up to interact with the SDK features.
 
 The Bluetooth communication between the headset and the application is managed through the use of the following features. It allows Bluetooth devices scanning, connection, disconnection, reading informations and EEG streaming.
 
-##### Connection
+##### CONNECTION
 To connect to a headset, you need to call the following method:
 
     client.connectBluetooth(connectionConfig);
@@ -222,7 +219,7 @@ Here is an example for initializing a ConnectionStateListener and a ConnectionCo
 	.scanDeviceType(features.ScannableDevices.MELOMIND)
 	.create();
 
-###### Disconnection
+###### DISCONNECTION
 To end the current connection with a connected headset, you need to call the following method:
 
     client.disconnectBluetooth()
@@ -241,7 +238,7 @@ For getting the current battery level of the connected headset, you need to call
     client.readBattery(deviceInfoListener)
 
 
-**Parameters **
+**Parameters**
 
 >DeviceInfoListener deviceInfoListener is an instance of the DeviceInfoListener Object.
 
@@ -290,7 +287,7 @@ Here is an example for initializing a DeviceInfoListener instance to add before 
 
 The EEG data acquisition and signal processing are managed through the use of the following features. It allows starting and stopping EEG data streaming.
 
-###### Starting an EEG stream
+###### STARTING AN EEG STREAM
 
 
 For starting the EEG acquisition, you needs to call the following method:
@@ -298,7 +295,7 @@ For starting the EEG acquisition, you needs to call the following method:
     client.startStream(streamConfig)
 
 
-** Parameters **
+**Parameters**
 
 >streamConfig is the streaming configuration Object. It provides some methods to customize the streaming parameters
 
@@ -393,7 +390,7 @@ To determine if the returned MbtEEGPacket object contains only empty values, you
 *Note: You should not call this method if the application is not connected to a headset.*
 
 
-###### Stopping current stream 
+###### STOPPING A CURRENT EEG STREAM 
 For stopping the EEG acquisition, you need to call the following method:
 
     client.stopStream()
@@ -404,8 +401,10 @@ This method stops to transmit notification to the application so that no EEG dat
 *Note: You should not call this method if a streaming has not been started and if the application is not connected to a headset.*
 
 
-##V.	Appendix
+## V.Appendix
+----
 
+### Bluetooth states
 Here is the list of all the possible Bluetooth states that a ConnectionStateListener instance can send:
 
 ----
@@ -491,23 +490,45 @@ Used to notify user when a device has been found during scanning. The device can
     DISCONNECTED
 When connection is lost.
 
-## List of ConnectionExceptions values:
+### ConnectionExceptions values
 
-* BT_NOT_ACTIVATED = "Bluetooth adapter is disabled, please enable adapter first.";
-    public static final String GPS_DISABLED = "LE Scanner needs access to GPS but GPS is disabled, please enable GPS and try again";
-* GPS_PERMISSIONS_NOT_GRANTED = "LE Scanner needs access to GPS but permissions are not granted, please give permissions to GPS and try again";
-* LE_SCAN_FAILURE = "LE Scan has failed to start";
-* CONNECTION_FAILURE = "Connection operation has failed. Please try again";
-* ANOTHER_DEVICE_CONNECTED = "Another device is already connected, please call disconnect(), wait for the DISCONNECTED event in onStateChanged callback then try again";
-* INVALID_NAME = "Invalid parameters: Input name does not match the required format. Name must start with melo_ or VPro";
-* INVALID_SCAN_DURATION = "Invalid parameters: Scan duration is too small. It must be at least 10sec. Please change duration and try again";
+    BT_NOT_ACTIVATED  
+"Bluetooth adapter is disabled, please enable adapter first.";
 
-## List of EEGExceptions values:
+    GPS_DISABLED 
+"LE Scanner needs access to GPS but GPS is disabled, please enable GPS and try again";
 
-* DEVICE_NOT_CONNECTED = "device not connected, impossible to start streaming";
-* DEVICE_JUST_DISCONNECTED = "device has disconnected, streaming has aborted";
-* STREAM_START_FAILED = "Couldn't start EEG acquisition, please try again";
-* INVALID_PARAMETERS = "Invalid input parametersn, please check your configuration and try again";
+    GPS_PERMISSIONS_NOT_GRANTED
+"LE Scanner needs access to GPS but permissions are not granted, please give permissions to GPS and try again";
+
+    LE_SCAN_FAILURE
+"LE Scan has failed to start";
+
+    CONNECTION_FAILURE
+"Connection operation has failed. Please try again";
+
+    ANOTHER_DEVICE_CONNECTED 
+"Another device is already connected, please call disconnect(), wait for the DISCONNECTED event in onStateChanged callback then try again";
+
+    INVALID_NAME 
+"Invalid parameters: Input name does not match the required format. Name must start with melo_ or VPro";
+
+    INVALID_SCAN_DURATION
+"Invalid parameters: Scan duration is too small. It must be at least 10sec. Please change duration and try again";
+
+### EEGExceptions values
+
+    DEVICE_NOT_CONNECTED
+"device not connected, impossible to start streaming";
+
+    DEVICE_JUST_DISCONNECTED
+"device has disconnected, streaming has aborted";
+
+    STREAM_START_FAILED 
+"Couldn't start EEG acquisition, please try again";
+
+    INVALID_PARAMETERS
+"Invalid input parametersn, please check your configuration and try again";
 
 
 
