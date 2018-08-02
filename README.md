@@ -52,6 +52,7 @@ The main features offered by the SDK are listed below.
 * Notification from the SDK to your application when new user-readable EEG data are received
 * Stopping streaming to stop receiving EEG data
 * Processing of the EEG signal acquired by the headset, that includes a conversion of the EEG raw data acquired into user-readable EEG data values.
+* Real time computation of quality values for 1s of EEG.
 
 
 ## IV.  Tutorial
@@ -187,6 +188,7 @@ More states are listed in the appendix.
 Then you need to initialize the connection configuration by creating an instance of the ConnectionConfig Object. This instance must contains the instance of ConnectionStateListener Object previously created. Moreover, the user can add some specifications:
 
 * .deviceName(String deviceName) : the parameter is a String Object that contains the name of the headset to connect. A Melomind device always starts with "melo_" followed by 10 digits.
+	**If you don't want to specify any, pass null. This will tell the SDK to connect to the first found melomind** 
 
 * .maxScanDuration(long durationInMillis) : the maximum scanning duration (time after which the application will stop looking for a headset to connect, because the scanning has taken too long). A minimum value of **20000** milliseconds is mandatory. Note: This value is in milliseconds.*
 
@@ -313,6 +315,10 @@ Then you need to initialize the streaming configuration by creating an instance 
 
 *Note : This value is in milliseconds.*
 
+* .useQualities(boolean) : Tells whether or not the quality checker will be invoked every time a new MbtEEGPacket is created. 
+This algorithm is computed asynchronously in order not to congest the eeg flow. The result is stored in the MbtEEGPacket and is accessible by calling  `MBTEEGPacket.getQualities()`
+**Reminder: a notification period of 1000ms is required to use the quality algorithms**
+
 Here is an example for initializing a StreamConfig and a EegListener instance to add before calling `client.startStream(streamConfig)`
 
     EegListener<EEGException> eegListener = new EegListener<EEGException>() {
@@ -362,19 +368,10 @@ It is possible to get the same matrix where the lines and columns are inverted (
     ArrayList<ArrayList<Float>> invertedMatrix = MatrixUtils.invertFloatMatrix(mbtEEGPackets.getChannelsData()));
 
 
-To set a new value to the EEG data matrix, you need to add the following code:
-
-    mbtEEGPackets.setChannelsData(invertedMatrix)
-
-
 To get the status associated to the EEG data, you need to add the following code :
 
     mbtEEGPackets.getStatusData()
-
-
-To set a new value to the status associated to the EEG data, you need to add the following code:
-
-    mbtEEGPackets.setStatusData(statusData)
+*Note: the status data is currently not used.*
 
  
 To display all the informations included in the returned MbtEEGPacket object, you need to add the following code : 
@@ -389,6 +386,16 @@ To determine if the returned MbtEEGPacket object contains only empty values, you
 
 *Note: You should not call this method if the application is not connected to a headset.*
 
+###### UNDERSTANDING THE QUALITY CHECKER
+The quality checker is a closed source algorithm that is able to assess the quality of the EEG signal. It is based on the recorded EEG signal and the sampling frequency. 
+The output is a one-dimension ArrayList<Float> that contains one value per channel. (ie 2 for melomind because melomind has only two EEG channels)
+The following values represents the possible output of the quality checker algorithm.
+* 1.0 : The EEG signal is very good and perfectly usable. 
+* 0.5 : the EEG is almost good but there is a lot of physiological artifacts (blinking, eyes motion, ...)
+* 0.25 : the EEG is almost good but there is a lot of muscular artifacts (chewing, head motion,...)
+* 0.0 : The EEG is very bad and unusable. This may indicate that the headset is not correcty set on one's head.
+* -1.0 : There is no EEG: The headset is probably not on someones's head. 
+
 
 ###### STOPPING A CURRENT EEG STREAM 
 For stopping the EEG acquisition, you need to call the following method:
@@ -399,6 +406,21 @@ For stopping the EEG acquisition, you need to call the following method:
 This method stops to transmit notification to the application so that no EEG data acquired by the headset are received.
  
 *Note: You should not call this method if a streaming has not been started and if the application is not connected to a headset.*
+
+##### Device Features
+
+The device module is responsible for managing all the information regarding the headset. It is also responsible for managing acquisitions that are not EEG acquisitions (such as batterly level).
+To have access to the currently connected device, call the following method: 
+
+        client.requestCurrentConnectedDevice(new SimpleRequestCallback<MbtDevice>() {
+            @Override
+            public void onRequestComplete(MbtDevice object) {
+                //TODO: your own code.
+            }
+        });
+The `object` is null until a device is connected (ie the  `BtState.CONNECTED_AND_READY` state has been reached). 
+
+The `MbtDevice` class is abstract and cannot be instanciated. Instead you'll receive and instance of either `MelomindDevice`or `VproDevice`, depending on which device you're connected to.  
 
 
 ## V.Appendix
