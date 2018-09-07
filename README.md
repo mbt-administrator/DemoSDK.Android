@@ -23,7 +23,7 @@ This library is currently distributed as a .aar file. Its content is obfuscated.
 
 ## II.  Versions
 ----
-The current version of the SDK is 2.0.1. Further updates will be released in the following months with more features, but don’t try to use the 1.0.0 version, it has been removed. 
+The current version of the SDK is 2.0.2. Further updates will be released in the following months with more features, but don’t try to use the 1.0.0 version, it has been removed. 
 
 Using the My Brain Technologies’ SDK requires to install an IDE for developing Android applications. 
 Note : this document explains how to install the SDK on Android Studio IDE only.
@@ -113,10 +113,10 @@ Inside your app *build.gradle* file, add the following block of code
         }
     }
 
-Add the following dependency to your dependencies list. If the ‘2.0.1’ version is not the lastest available version, replace ‘2.0.1’ with the lastest version of the SDK:
+Add the following dependency to your dependencies list. If the ‘2.0.2’ version is not the lastest available version, replace ‘2.0.2’ with the lastest version of the SDK:
 
 
-    implementation 'mybraintech.com:sdk-lite:2.0.1
+    implementation 'mybraintech.com:sdk-lite:2.0.2
 
 
 Build with ./gradlew build command or “Sync now” option on Android Studio.
