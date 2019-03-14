@@ -67,7 +67,7 @@ The main features offered by the SDK are listed below.
 
 ### Device 
 
- 	Configuration of the following customizable parameters for the Melomind headset :
+ Configuration of the following customizable parameters for the Melomind headset :
 
 - Maximum transmission unit (MTU) 
 - Notch filter 
