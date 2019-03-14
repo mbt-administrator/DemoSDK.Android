@@ -56,7 +56,7 @@
         app:layout_constraintTop_toTopOf="@+id/guidelineTopButton"
         app:layout_constraintBottom_toTopOf="@+id/guidelineBottomButton"
         app:layout_constraintEnd_toEndOf="@+id/guidelineEnd"
-        app:layout_constraintStart_toStartOf="@+id/guidelineStartDisconnectButton"
+        app:layout_constraintStart_toStartOf="@+id/guidelineStartCancelButton"
         />
 
 
@@ -76,20 +76,6 @@
     </LinearLayout>
 
     <TextView
-        android:id="@+id/titleEEGGraph"
-        android:layout_width="wrap_content"
-        android:layout_height="0dp"
-        android:text="@string/title_graph_eeg"
-        android:textColor="@color/white"
-        android:gravity="center_vertical"
-        android:textSize="18sp"
-
-        app:layout_constraintBottom_toBottomOf="@+id/guidelineBottomQuality"
-        app:layout_constraintEnd_toEndOf="@+id/guidelineEnd"
-        app:layout_constraintStart_toStartOf="@+id/guidelineStart"
-        app:layout_constraintTop_toTopOf="@id/guidelineTopQuality" />
-
-    <TextView
         android:id="@+id/channel_1_quality"
         android:layout_width="wrap_content"
         android:layout_height="0dp"
@@ -97,10 +83,25 @@
         android:textColor="@color/white"
         android:gravity="center_vertical"
         android:textSize="18sp"
-        android:visibility="gone"
+        android:visibility="visible"
 
         app:layout_constraintBottom_toBottomOf="@+id/guidelineBottomQuality"
         app:layout_constraintEnd_toStartOf="@+id/guidelineEndScanButton"
+        app:layout_constraintTop_toTopOf="@id/guidelineTopQuality" />
+
+    <TextView
+        android:id="@+id/titleEEGGraph"
+        android:layout_width="wrap_content"
+        android:layout_height="0dp"
+        android:text="@string/title_graph_eeg"
+        android:textColor="@color/white"
+        android:gravity="center_vertical"
+        android:visibility="gone"
+        android:textSize="18sp"
+
+        app:layout_constraintBottom_toBottomOf="@+id/guidelineBottomQuality"
+        app:layout_constraintEnd_toEndOf="@+id/guidelineEnd"
+        app:layout_constraintStart_toStartOf="@+id/guidelineStart"
         app:layout_constraintTop_toTopOf="@id/guidelineTopQuality" />
 
     <TextView
@@ -111,11 +112,10 @@
         android:textColor="@color/white"
         android:textSize="18sp"
         android:gravity="center_vertical"
-        android:visibility="gone"
-
+        android:visibility="visible"
 
         app:layout_constraintBottom_toBottomOf="@+id/guidelineBottomQuality"
-        app:layout_constraintStart_toStartOf="@+id/guidelineStartDisconnectButton"
+        app:layout_constraintStart_toStartOf="@+id/guidelineStartCancelButton"
         app:layout_constraintTop_toTopOf="@id/guidelineTopQuality" />
 
     <com.github.mikephil.charting.charts.LineChart
@@ -162,7 +162,7 @@
         custom:layout_constraintGuide_percent="0.47" />
 
     <android.support.constraint.Guideline
-        android:id="@+id/guidelineStartDisconnectButton"
+        android:id="@+id/guidelineStartCancelButton"
         android:layout_width="1dp"
         android:layout_height="wrap_content"
         android:orientation="vertical"
