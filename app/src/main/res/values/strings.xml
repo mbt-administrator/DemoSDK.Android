@@ -13,7 +13,7 @@
     <string name="stop_streaming">Stop Streaming</string>
     <string name="read_battery">Get Battery Level</string>
 
-    <string name="connected_to">CONNECTED TO </string>
+    <string name="connected_to">CONNECTED</string>
     <string name="welcome">WELCOME</string>
 
     <string name="scan_in_progress">Scan in progress </string>
@@ -26,6 +26,7 @@
     <string name="disconnect_failed">Impossible to disconnect from </string>
     <string name="wrong_device_name">Wrong name : must contains 10 digits </string>
     <string name="disconnected_headset">The headset have been disconnected </string>
+    <string name="no_connected_headset">No connected headset </string>
 
     <string name="title_graph_eeg">Your signal </string>
 

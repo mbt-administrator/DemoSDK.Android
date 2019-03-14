@@ -43,6 +43,16 @@
         app:layout_constraintBottom_toBottomOf="@+id/guidelineBottomName"
         />
 
+    <Switch
+        android:id="@+id/connectAudio"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Bluetooth Audio Streaming"
+        app:layout_constraintTop_toTopOf="@+id/guidelineTopSwitch"
+        app:layout_constraintBottom_toBottomOf="@+id/guidelineBottomSwitch"
+        app:layout_constraintEnd_toEndOf="@+id/guidelineEnd"
+        app:layout_constraintStart_toStartOf="@+id/guidelineStart" />
+
     <Button
         android:id="@+id/scanButton"
         android:layout_width="match_parent"
@@ -69,11 +79,25 @@
         custom:layout_constraintGuide_percent="0.1" />
 
     <android.support.constraint.Guideline
+        android:id="@+id/guidelineEndScanButton"
+        android:layout_width="1dp"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        custom:layout_constraintGuide_percent="0.47" />
+
+    <android.support.constraint.Guideline
         android:id="@+id/guidelineEndPrefix"
         android:layout_width="1dp"
         android:layout_height="wrap_content"
         android:orientation="vertical"
         custom:layout_constraintGuide_percent="0.35" />
+
+    <android.support.constraint.Guideline
+        android:id="@+id/guidelineStartCancelButton"
+        android:layout_width="1dp"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        custom:layout_constraintGuide_percent="0.53" />
 
     <android.support.constraint.Guideline
         android:id="@+id/guidelineEnd"
@@ -118,13 +142,27 @@
         android:layout_width="1dp"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        custom:layout_constraintGuide_percent="0.75" />
+        custom:layout_constraintGuide_percent="0.825" />
 
     <android.support.constraint.Guideline
         android:id="@+id/guidelineBottomButton"
         android:layout_width="1dp"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        custom:layout_constraintGuide_percent="0.85" />
+        custom:layout_constraintGuide_percent="0.925" />
+
+    <android.support.constraint.Guideline
+        android:id="@+id/guidelineTopSwitch"
+        android:layout_width="1dp"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        custom:layout_constraintGuide_percent="0.75" />
+
+    <android.support.constraint.Guideline
+        android:id="@+id/guidelineBottomSwitch"
+        android:layout_width="1dp"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        custom:layout_constraintGuide_percent="0.80" />
 
 </android.support.constraint.ConstraintLayout>
