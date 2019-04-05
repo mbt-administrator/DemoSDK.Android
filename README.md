@@ -284,7 +284,9 @@ ConnectionConfig connectionConfig = new ConnectionConfig.Builder(bluetoothStateL
 
  Moreover, you can specify some optional parameters :
 
-- `deviceName(String deviceName)` : the parameter is a `String` Object that contains the name of the headset to connect. A Melomind device always starts with `melo_` followed by 10 digits. If you do not specify `deviceName` or set the`deviceName` parameter to `null` in your `ConnectionConfig` builder, the SDK will connect the first available Melomind found no matter its name. 
+- `deviceName(String deviceName)` : the parameter is a `String` Object that contains the name of the headset to connect. A Melomind name always starts with `melo_` followed by 10 digits. If you do not specify `deviceName` or set the`deviceName` parameter to `null` in your `ConnectionConfig` builder, the SDK will connect the first available Melomind found no matter its name. 
+
+- `deviceQrCode(String deviceQrCode)` : the parameter is a `String` Object that contains the QR code identifier of the headset to connect. A Melomind QR code always starts with `MM` followed by 7 or 8 digits. If you do not specify `deviceQrCode` neither `deviceName`, or set the`deviceQrCode` and `deviceName` parameters to `null` in your `ConnectionConfig` builder, the SDK will connect the first available Melomind found. If you want to connect a specific headset, you can specify only `deviceQrCode` or only`deviceName`. As every QR code and name are unique, if you do specify `deviceQrCode` and`deviceName` in your `ConnectionConfig` builder, the SDK will check if the QR code matches the name. If they don't match, an error is returned on the `onError()` callback. 
 
 - `maxScanDuration(long durationInMillis)` : the maximum scanning duration is the time within the SDK is allowed to look for an available headset to connect. The scan is stopped if the connection operation time out and no headset is found within the permitted time. A minimum value of **10000** milliseconds is mandatory, and there is no maximum value. If you do not specify `maxScanDuration`in your `ConnectionConfig` builder, the maximum duration is set to 30000 milliseconds.
 
@@ -645,7 +647,7 @@ ConnectionConfig connectionConfig = new ConnectionConfig.Builder(bluetoothStateL
 
 - `notchFilter(FilterConfig value)` : the headset applies a band stop filter to remove artefacts created by the current, that can be visible in the EEG signal measured by the electrodes. According to the country, the frequency of the current can be 50 Hz or 60 Hz or 70 Hz so this option allows you to choose the filter to apply. Its value can be `FilterConfig.NOTCH_FILTER_50HZ` for a 50 Hz filter, `FilterConfig.NOTCH_FILTER_60HZ` for a 60 Hz filter, or `FilterConfig.NOTCH_FILTER_DEFAULT`for a 70 Hz filter.  If you do not specify `notchFilter` in your `DeviceConfig` builder, the headset applies a filter of 70 Hz.
 
-- `useP300(boolean useP300)` : the headset detects P300 waves if you set `useP300` parameter to `true`. A P300 wave is an event related potential (ERP) component elicited *in* the process of decision making. If you do not specify `useP300` in your `DeviceConfig` builder, the headset do not detects the P300 waves.
+- `useP300(boolean useP300)` : the headset detects P300 waves if you set `useP300` parameter to `true`. A P300 wave is an event related potential (ERP) component elicited *in* the process of decision making. Triggers synchronization requires to set `useP300` parameter to `true`. If you do not specify `useP300` in your `DeviceConfig` builder, the headset do not detects the P300 waves.
 
 - `listenToDeviceStatus(DeviceStatusListener deviceStatusListener)` : the headset detects the signal status if you set a non null instance of `DeviceStatusListener` to the `deviceStatusListener` parameter. Use the `DeviceStatusListener` constructor to create the instance :
 
