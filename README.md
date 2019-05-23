@@ -105,14 +105,6 @@ The SDK relies on Bluetooth Low Energy scanner. From Android 6, the Bluetooth is
 
 To do so, you must request permission when you want the user to connect to a remote Bluetooth device. 
 
-##### Request Credentials 
-
-For using the SDK, you must register for a personal set of credentials and specify these credentials in your Android gradle file. This credentials are unique to one application so you need to get several credentials for developping multiple applications.
-
-_Note: The access to the SDK will be blocked if you don’t get your personal set of credentials._
-
-To do so, send an email at **support@mybraintech.com** that includes the user name and email you want to use for your account creation. We will send you a confirmation email if the user name is not already taken with your password.
-Keep your login and password safe. You’ll need them to access to the library.
 
 ### 2. How to install the SDK 
 
@@ -120,11 +112,9 @@ Inside the Gradle section, open your gradle.properties file and add the followin
 
 ```
 nexusUrl=https://package.mybraintech.com/repository/maven-public/
-nexusUsername=username
+nexusUsername=sdk
 nexusPassword=password
 ```
-
-Replace “**username**” and “**password**” with your own credentials.
 
 Inside the *build.gradle* file located at the **root** of your project folder, add the following code :
 
@@ -133,8 +123,8 @@ repositories{
     maven{
         url nexusUrl
         credentials {
-            username nexusUsername
-            password nexusPassword
+            username sdk
+            password MBTSDK2019
         }
     }
 }
