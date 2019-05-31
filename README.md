@@ -1124,3 +1124,5 @@ ERROR_BLUETOOTH_DISABLED
 ```
 
 This operation could not be started : Bluetooth is disabled.
+
+* Features only available on the Premium SDK version 
