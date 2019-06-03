@@ -36,7 +36,7 @@ This library is currently distributed as a .aar file. Its content is obfuscated.
 
 ------
 
-The current version of the SDK is 2.0.4.3. Further updates will be released in the following months with more features. 
+The current version of the SDK is 2.0.5. Further updates will be released in the following months with more features. 
 
 Using the My Brain Technologies’ SDK requires to install an IDE for developing Android applications. 
 *Note : this document explains how to install the SDK on Android Studio IDE only.*
@@ -136,11 +136,11 @@ android {
 }
 ```
 
-Add the following dependency to your dependencies list. If the `2.0.4.3` version is not the last available version, replace `2.0.4.3` with the last version of the SDK:
+Add the following dependency to your dependencies list. If the `2.0.5` version is not the last available version, replace `2.0.5` with the last version of the SDK:
 
 ```
-implementation 'mybraintech.com:sdk-full:2.0.4.3'
-implementation 'mybraintech.com:sdk-lite:2.0.4.3:javadoc'
+implementation 'mybraintech.com:sdk-full:2.0.5'
+implementation 'mybraintech.com:sdk-lite:2.0.5:javadoc'
 implementation 'com.android.support:appcompat-v7:28.0.0'
 ```
 
@@ -277,9 +277,9 @@ ConnectionConfig connectionConfig = new ConnectionConfig.Builder(bluetoothStateL
 
   *Note: This value is in milliseconds.*
 
-- `connectAudio(boolean useAudio)`:  as the Melomind headset is an audio headset, you can enable Bluetooth connection for audio streaming by setting `useAudio` to `true`. If you do not specify `connectAudio` or set `useAudio` to `false`, the headset is only connected for data streaming and no audio stream can be broadcasted to it.  
+- `connectAudio()`:  as the Melomind headset is an audio headset, you can enable Bluetooth connection for audio streaming by specifying `useAudio`. If you do not specify `connectAudio`, the headset is only connected for data streaming and no audio stream can be broadcasted to it.  
 
-  *Note : This option must be disabled if you connect the headset with a Jack cable. To disable it, you have to set `useAudio` to `false` or do not specify `connectAudio` in your `StreamConfig` builder.* 
+  *Note : This option must be disabled if you connect the headset with a Jack cable. To disable it, do not specify `connectAudio` in your `StreamConfig` builder.* 
 
 Here is a full example of connection to a Melomind headset whose name is `melo_0123456789`, with audio stream option enabled :
 
@@ -305,7 +305,7 @@ public void onError(BaseError error, String additionnalInfo) {}
 ConnectionConfig connectionConfig = new ConnectionConfig.Builder(bluetoothStateListener)
 .deviceName(“melo_0123456789”)
 .maxScanDuration(20000)
-.connectAudio(true)
+.connectAudio()
 .create();
 
 sdkClient.connectBluetooth(connectionConfig);
@@ -370,12 +370,12 @@ Then you need to create a non null instance of the `StreamConfig` Object. This i
 
 Moreover, you can specify some optional parameters :
 
-- `useQualities(boolean computeQualities)` : the SDK computes the signal quality from the raw EEG signal acquired for every acquisition channel if `computesQualities` is set to `true`. This computation is performed asynchronously in order not to congest the EEG flow. The computed qualities are associated to the raw EEG data in the `MbtEEGPacket` Object returned by the `onNewPackets` callback, and can be retrieved by calling `mbtEEGPackets.getQualities()`. This getter returns a list whose size is equal to the number of acquisition channels of the headset. For example, the Melomind headset has 2 channels, so the first value corresponds to the first channel (brain position P3) and the second value corresponds to the second channel (brain position P4). The signal quality is not computed if you do not specify `useQualities` in your `StreamConfig`builder or set `computeQualities` to `false`.* 
+- `useQualities()` * : the SDK computes the signal quality from the raw EEG signal acquired for every acquisition channel if you specify `computesQualities` . This computation is performed asynchronously in order not to congest the EEG flow. The computed qualities are associated to the raw EEG data in the `MbtEEGPacket` Object returned by the `onNewPackets` callback, and can be retrieved by calling `mbtEEGPackets.getQualities()`. This getter returns a list whose size is equal to the number of acquisition channels of the headset. For example, the Melomind headset has 2 channels, so the first value corresponds to the first channel (brain position P3) and the second value corresponds to the second channel (brain position P4). The signal quality is not computed if you do not specify `useQualities` in your `StreamConfig` builder. 
 - `setNotificationPeriod(int periodInMillis) ` : the SDK sends the acquired EEG data to the SDK every second by default. You can increase or decrease this notification period by setting the value of your choice to the `periodInMillis` parameter. This option can be useful to improve the accuracy of a real time acquisition. The minimum value is 200 milliseconds if the signal quality is not computed, and there is no maximum value. A notification period of 1000 milliseconds is required to compute the signal quality. If you do not specify any `setNotificationPeriod` in your `StreamConfig` builder, the default period (1 second) is used.
 
 *Note : This value is in milliseconds.*
 
-- `configureHeadset(EegStreamConfig eegStreamConfig)` : you can configure the headset device filters, gain, MTU, and other parameters described below (cf Device Features). If you do not specify any `configureHeadset` in your `StreamConfig` builder, the default filter, gain and MTU are used. 
+- `configureHeadset(EegStreamConfig eegStreamConfig)` *: you can configure the headset device filters, gain, MTU, and other parameters described below (cf Device Features). If you do not specify any `configureHeadset` in your `StreamConfig` builder, the default filter, gain and MTU are used. 
 
 Here is a full example of streaming EEG data when a headset is connected :
 
@@ -393,7 +393,7 @@ EegListener<BaseError> eegListener = new EegListener<BaseError>() {
         
 StreamConfig streamConfig = new StreamConfig.Builder(eegListener)
 .setNotificationPeriod(20000)
-.useQualities(true)
+.useQualities()
 .configureHeadset(new EegStreamConfig.Builder()
                                     .useP300()
                                     .mtu(47)
@@ -423,7 +423,7 @@ public void onError(BaseError error, String additionnalInfo) {}
 ConnectionConfig connectionConfig = new ConnectionConfig.Builder(bluetoothStateListener)
 .deviceName(“melo_0123456789”)
 .maxScanDuration(20000)
-.connectAudio(true)
+.connectAudio()
 .create();
 
 sdkClient.connectBluetooth(connectionConfig);
@@ -589,7 +589,7 @@ public void onError(BaseError error, String additionnalInfo) {}
 ConnectionConfig connectionConfig = new ConnectionConfig.Builder(bluetoothStateListener)
 .deviceName(“melo_0123456789”)
 .maxScanDuration(20000)
-.connectAudio(true)
+.connectAudio()
 .create();
 
 sdkClient.connectBluetooth(connectionConfig);
@@ -653,6 +653,427 @@ ConnectionConfig connectionConfig = new ConnectionConfig.Builder(bluetoothStateL
   If you do not specify `listenToDeviceStatus` in your `EegStreamConfig` builder, the headset won't send you the DC offset and saturation values.
 
 - `enableDcOffset()` : the DC offset is an optional status (cf`listenToDeviceStatus`above) that you can enable if you specify `enableDcOffset`. It means that this option allows you to receive the value of the current DC offset through the `onNewDCOffsetMeasured` callback if `listenToDeviceStatus`option is enabled in your `EegStreamConfig` builder. If you do not specify `enableDcOffset`, the headset won't send you the DC offset values.
+
+###### CHANGING SERIAL NUMBER* 
+
+Each headset has a unique serial number to identify it.
+To change the serial number of the connected headset, you need to call the following method:
+*Warning : If you change the serial number, the associated QR code scan won't work anymore*
+
+```
+sdkClient.updateSerialNumber(serialNumber, requestCallback)
+```
+
+**Parameters**
+
+> `serialNumber` is an instance of the `String` Object.  It must contains the new serial number to set to the connected headset.
+> `requestCallback` is an instance of the `SimpleRequestCallback<byte[]>` Object.  It provides a callback that returns the response sent by the headset once the update command is received. Use the `SimpleRequestCallback` constructor to create the instance.
+
+This method sends a request to the headset to change its serial number. The headset response triggers the `onRequestComplete` callback, that return the current value of the serial number `object` variable after the update. 
+
+Here is a full example of how to change the serial number to `melo_9876543210` when a headset whose name is `melo_0123456789` is connected :
+
+```
+MbtClient sdkClient = MbtClient.getClientInstance();
+
+BluetoothStateListener bluetoothStateListener = new BluetoothStateListener(){ 
+
+@Override
+public void onNewState(BtState newState) {}
+
+@Override
+public void onDeviceConnected() {
+  
+    sdkClient.updateSerialNumber("melo_987654321", new SimpleRequestCallback<byte[]>() {
+            @Override
+            public void onRequestComplete(byte[] object) {
+            }
+        });
+}
+
+@Override 
+public void onDeviceDisconnected() {}
+
+@Override 
+public void onError(BaseError error, String additionnalInfo) {}
+
+}; 
+
+ConnectionConfig connectionConfig = new ConnectionConfig.Builder(bluetoothStateListener)
+.deviceName(“melo_0123456789”)
+.maxScanDuration(20000)
+.connectAudio()
+.create();
+
+sdkClient.connectBluetooth(connectionConfig);
+
+```
+
+###### CHANGING PRODUCT NAME* 
+
+Each headset has a product name that matchs most of the time the serial number.
+To change the product name of the connected headset, you need to call the following method:
+
+```
+sdkClient.updateProductName(productName, requestCallback)
+```
+
+**Parameters**
+
+> `productName` is an instance of the `String` Object.  It must contains the new product name to set to the connected headset.
+> `requestCallback` is an instance of the `SimpleRequestCallback<byte[]>` Object.  It provides a callback that returns the response sent by the headset once the update command is received. Use the `SimpleRequestCallback` constructor to create the instance.
+
+This method sends a request to the headset to change its product name. The headset response triggers the `onRequestComplete` callback, that return the current value of the product name `object` variable after the update. 
+
+Here is a full example of how to change the product name to `example` when a headset whose name is `melo_0123456789` is connected :
+
+```
+MbtClient sdkClient = MbtClient.getClientInstance();
+
+BluetoothStateListener bluetoothStateListener = new BluetoothStateListener(){ 
+
+@Override
+public void onNewState(BtState newState) {}
+
+@Override
+public void onDeviceConnected() {
+  
+    sdkClient.updateProductName("example", new SimpleRequestCallback<byte[]>() {
+            @Override
+            public void onRequestComplete(byte[] object) {
+            }
+        });
+}
+
+@Override 
+public void onDeviceDisconnected() {}
+
+@Override 
+public void onError(BaseError error, String additionnalInfo) {}
+
+}; 
+
+ConnectionConfig connectionConfig = new ConnectionConfig.Builder(bluetoothStateListener)
+.deviceName(“melo_0123456789”)
+.maxScanDuration(20000)
+.connectAudio()
+.create();
+
+sdkClient.connectBluetooth(connectionConfig);
+
+```
+
+###### CHANGING EXTERNAL NAME* 
+
+Each headset has an external name that matchs the QR code number.
+*Warning : If you change the external name, the QR code scan won't work anymore*
+To change the external name of the connected headset, you need to call the following method:
+
+```
+sdkClient.updateExternalName(productName, requestCallback)
+```
+
+**Parameters**
+
+> `externalName` is an instance of the `String` Object.  It must contains the new external name to set to the connected headset.
+> `requestCallback` is an instance of the `SimpleRequestCallback<byte[]>` Object.  It provides a callback that returns the response sent by the headset once the update command is received. Use the `SimpleRequestCallback` constructor to create the instance.
+
+This method sends a request to the headset to change its external name. The headset response triggers the `onRequestComplete` callback, that return the current value of the product name `object` variable after the update. 
+
+Here is a full example of how to change the product name to `melo_9876543210` when a headset whose name is `melo_0123456789` is connected :
+
+```
+MbtClient sdkClient = MbtClient.getClientInstance();
+
+BluetoothStateListener bluetoothStateListener = new BluetoothStateListener(){ 
+
+@Override
+public void onNewState(BtState newState) {}
+
+@Override
+public void onDeviceConnected() {
+  
+    sdkClient.updateProductName("melo_9876543210", new SimpleRequestCallback<byte[]>() {
+            @Override
+            public void onRequestComplete(byte[] object) {
+            }
+        });
+}
+
+@Override 
+public void onDeviceDisconnected() {}
+
+@Override 
+public void onError(BaseError error, String additionnalInfo) {}
+
+}; 
+
+ConnectionConfig connectionConfig = new ConnectionConfig.Builder(bluetoothStateListener)
+.deviceName(“melo_0123456789”)
+.maxScanDuration(20000)
+.connectAudio()
+.create();
+
+sdkClient.connectBluetooth(connectionConfig);
+
+```
+
+###### CONNECT AUDIO* 
+
+To stream audio using Bluetooth to a connected headset that is not already connected in audio, you need to call the following method:
+
+```
+sdkClient.connectAudio(requestCallback)
+```
+
+**Parameters**
+
+> `requestCallback` is an instance of the `SimpleRequestCallback<byte[]>` Object.  It provides a callback that returns the response sent by the headset once the update command is received. Use the `SimpleRequestCallback` constructor to create the instance.
+
+This method sends a request to the headset to connect audio in Bluetooth. The headset response triggers the `onRequestComplete` callback, that return a success or failure status in the `object` variable after the connection. 
+
+Here is a full example of how to connect audio when a headset whose name is `melo_0123456789` is connected :
+
+```
+MbtClient sdkClient = MbtClient.getClientInstance();
+
+BluetoothStateListener bluetoothStateListener = new BluetoothStateListener(){ 
+
+@Override
+public void onNewState(BtState newState) {}
+
+@Override
+public void onDeviceConnected() {
+  
+    sdkClient.connectAudio(new SimpleRequestCallback<byte[]>() {
+            @Override
+            public void onRequestComplete(byte[] object) {
+            }
+        });
+}
+
+@Override 
+public void onDeviceDisconnected() {}
+
+@Override 
+public void onError(BaseError error, String additionnalInfo) {}
+
+}; 
+
+ConnectionConfig connectionConfig = new ConnectionConfig.Builder(bluetoothStateListener)
+.deviceName(“melo_0123456789”)
+.maxScanDuration(20000)
+.create();
+
+sdkClient.connectBluetooth(connectionConfig);
+
+```
+
+###### DISCONNECT AUDIO* 
+
+To disconnect audio on a connected headset, you need to call the following method:
+
+```
+sdkClient.disconnectAudio(requestCallback)
+```
+
+**Parameters**
+
+> `requestCallback` is an instance of the `SimpleRequestCallback<byte[]>` Object.  It provides a callback that returns the response sent by the headset once the update command is received. Use the `SimpleRequestCallback` constructor to create the instance.
+
+This method sends a request to the headset to disconnect audio in Bluetooth. The headset response triggers the `onRequestComplete` callback, that return a success or failure status in the `object` variable after the disconnection. 
+
+Here is a full example of how to disconnect audio when a headset whose name is `melo_0123456789` is connected in audio :
+
+```
+MbtClient sdkClient = MbtClient.getClientInstance();
+
+BluetoothStateListener bluetoothStateListener = new BluetoothStateListener(){ 
+
+@Override
+public void onNewState(BtState newState) {}
+
+@Override
+public void onDeviceConnected() {
+  
+    sdkClient.disconnectAudio(new SimpleRequestCallback<byte[]>() {
+            @Override
+            public void onRequestComplete(byte[] object) {
+            }
+        });
+}
+
+@Override 
+public void onDeviceDisconnected() {}
+
+@Override 
+public void onError(BaseError error, String additionnalInfo) {}
+
+}; 
+
+ConnectionConfig connectionConfig = new ConnectionConfig.Builder(bluetoothStateListener)
+.deviceName(“melo_0123456789”)
+.maxScanDuration(20000)
+.connectAudio()
+.create();
+
+sdkClient.connectBluetooth(connectionConfig);
+
+```
+
+###### CONNECT AUDIO* 
+
+To stream audio using Bluetooth to a connected headset that is not already connected in audio, you need to call the following method:
+
+```
+sdkClient.connectAudio(requestCallback)
+```
+
+**Parameters**
+
+> `requestCallback` is an instance of the `SimpleRequestCallback<byte[]>` Object.  It provides a callback that returns the response sent by the headset once the update command is received. Use the `SimpleRequestCallback` constructor to create the instance.
+
+This method sends a request to the headset to connect audio in Bluetooth. The headset response triggers the `onRequestComplete` callback, that return a success or failure status in the `object` variable after the connection. 
+
+Here is a full example of how to connect audio when a headset whose name is `melo_0123456789` is connected :
+
+```
+MbtClient sdkClient = MbtClient.getClientInstance();
+
+BluetoothStateListener bluetoothStateListener = new BluetoothStateListener(){ 
+
+@Override
+public void onNewState(BtState newState) {}
+
+@Override
+public void onDeviceConnected() {
+  
+    sdkClient.connectAudio(new SimpleRequestCallback<byte[]>() {
+            @Override
+            public void onRequestComplete(byte[] object) {
+            }
+        });
+}
+
+@Override 
+public void onDeviceDisconnected() {}
+
+@Override 
+public void onError(BaseError error, String additionnalInfo) {}
+
+}; 
+
+ConnectionConfig connectionConfig = new ConnectionConfig.Builder(bluetoothStateListener)
+.deviceName(“melo_0123456789”)
+.maxScanDuration(20000)
+.create();
+
+sdkClient.connectBluetooth(connectionConfig);
+
+```
+
+###### REBOOT HEADSET* 
+
+To reboot a connected headset, you need to call the following method:
+
+```
+sdkClient.rebootDevice(requestCallback)
+```
+
+**Parameters**
+
+> `requestCallback` is an instance of the `SimpleRequestCallback<byte[]>` Object.  It provides a callback that returns the response sent by the headset once the update command is received. Use the `SimpleRequestCallback` constructor to create the instance.
+
+This method sends a request to the headset to reboot. The headset response triggers the `onRequestComplete` callback, that return a success or failure status in the `object` variable after the reboot. 
+
+Here is a full example of how to reboot a connected headset whose name is `melo_0123456789` :
+
+```
+MbtClient sdkClient = MbtClient.getClientInstance();
+
+BluetoothStateListener bluetoothStateListener = new BluetoothStateListener(){ 
+
+@Override
+public void onNewState(BtState newState) {}
+
+@Override
+public void onDeviceConnected() {
+  
+    sdkClient.rebootDevice(new SimpleRequestCallback<byte[]>() {
+            @Override
+            public void onRequestComplete(byte[] object) {
+            }
+        });
+}
+
+@Override 
+public void onDeviceDisconnected() {}
+
+@Override 
+public void onError(BaseError error, String additionnalInfo) {}
+
+}; 
+
+ConnectionConfig connectionConfig = new ConnectionConfig.Builder(bluetoothStateListener)
+.deviceName(“melo_0123456789”)
+.maxScanDuration(20000)
+.connectAudio()
+.create();
+
+sdkClient.connectBluetooth(connectionConfig);
+
+```
+###### GET SYSTEM STATUS * 
+
+To get the device system status of the connected headset, you need to call the following method:
+
+```
+sdkClient.getDeviceSystemStatus(requestCallback)
+```
+
+**Parameters**
+
+> `requestCallback` is an instance of the `SimpleRequestCallback<byte[]>` Object.  It provides a callback that returns the response sent by the headset once the update command is received. Use the `SimpleRequestCallback` constructor to create the instance.
+
+This method sends a request to the headset to get the current headset system status. The headset response triggers the `onRequestComplete` callback, that return the value o the status in the `object` variable. 
+
+Here is a full example of how to get the system status of a connected headset whose name is `melo_0123456789` :
+
+```
+MbtClient sdkClient = MbtClient.getClientInstance();
+
+BluetoothStateListener bluetoothStateListener = new BluetoothStateListener(){ 
+
+@Override
+public void onNewState(BtState newState) {}
+
+@Override
+public void onDeviceConnected() {
+  
+    sdkClient.getDeviceSystemStatus(new SimpleRequestCallback<byte[]>() {
+            @Override
+            public void onRequestComplete(byte[] object) {
+            }
+        });
+}
+
+@Override 
+public void onDeviceDisconnected() {}
+
+@Override 
+public void onError(BaseError error, String additionnalInfo) {}
+
+}; 
+
+ConnectionConfig connectionConfig = new ConnectionConfig.Builder(bluetoothStateListener)
+.deviceName(“melo_0123456789”)
+.maxScanDuration(20000)
+.connectAudio()
+.create();
+
+sdkClient.connectBluetooth(connectionConfig);
+
+```
 
 ## V.Appendix
 
