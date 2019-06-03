@@ -654,11 +654,13 @@ ConnectionConfig connectionConfig = new ConnectionConfig.Builder(bluetoothStateL
 
 - `enableDcOffset()` : the DC offset is an optional status (cf`listenToDeviceStatus`above) that you can enable if you specify `enableDcOffset`. It means that this option allows you to receive the value of the current DC offset through the `onNewDCOffsetMeasured` callback if `listenToDeviceStatus`option is enabled in your `EegStreamConfig` builder. If you do not specify `enableDcOffset`, the headset won't send you the DC offset values.
 
+
 ###### CHANGING SERIAL NUMBER* 
 
 Each headset has a unique serial number to identify it.
-To change the serial number of the connected headset, you need to call the following method:
 *Warning : If you change the serial number, the associated QR code scan won't work anymore*
+
+To change the serial number of the connected headset, you need to call the following method:
 
 ```
 sdkClient.updateSerialNumber(serialNumber, requestCallback)
@@ -708,6 +710,7 @@ ConnectionConfig connectionConfig = new ConnectionConfig.Builder(bluetoothStateL
 sdkClient.connectBluetooth(connectionConfig);
 
 ```
+
 
 ###### CHANGING PRODUCT NAME* 
 
@@ -767,6 +770,7 @@ sdkClient.connectBluetooth(connectionConfig);
 
 Each headset has an external name that matchs the QR code number.
 *Warning : If you change the external name, the QR code scan won't work anymore*
+
 To change the external name of the connected headset, you need to call the following method:
 
 ```
