@@ -1550,4 +1550,4 @@ ERROR_BLUETOOTH_DISABLED
 
 This operation could not be started : Bluetooth is disabled.
 
-* Features only available on the Premium SDK version 
+*Features only available on the Premium SDK version. Please send a message at contact@mybraintech.com to get more informations about the Premium SDK version.
