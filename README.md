@@ -36,7 +36,7 @@ This library is currently distributed as a .aar file. Its content is obfuscated.
 
 ------
 
-The current version of the SDK is 2.0.5. Further updates will be released in the following months with more features. 
+The current version of the SDK is 2.0.5.1 Further updates will be released in the following months with more features. 
 
 Using the My Brain Technologies’ SDK requires to install an IDE for developing Android applications. 
 *Note : this document explains how to install the SDK on Android Studio IDE only.*
@@ -139,8 +139,8 @@ android {
 Add the following dependency to your dependencies list. If the `2.0.5` version is not the last available version, replace `2.0.5` with the last version of the SDK:
 
 ```
-implementation 'mybraintech.com:sdk-full:2.0.5'
-implementation 'mybraintech.com:sdk-lite:2.0.5:javadoc'
+implementation 'staging.mybraintech.com:sdk-lite:2.0.5.1'
+implementation 'staging.mybraintech.com:sdk-lite:2.0.5.1:javadoc'
 implementation 'com.android.support:appcompat-v7:28.0.0'
 ```
 
@@ -375,7 +375,7 @@ Moreover, you can specify some optional parameters :
 
 *Note : This value is in milliseconds.*
 
-- `configureHeadset(EegStreamConfig eegStreamConfig)` *: you can configure the headset device filters, gain, MTU, and other parameters described below (cf Device Features). If you do not specify any `configureHeadset` in your `StreamConfig` builder, the default filter, gain and MTU are used. 
+- `configureAcquisitionFromDeviceCommand(DeviceStreamingCommands... deviceCommands)` *: you can send commands to change the headset device notch filter, gain, MTU, or enable DC Offset and Triggers detection before starting the stream. You can send one or more commands by separating them with a commma in the method parameters. If you do not specify any `configureAcquisitionFromDeviceCommand` in your `StreamConfig` builder, the default filter, gain and MTU are used. 
 
 Here is a full example of streaming EEG data when a headset is connected :
 
@@ -394,12 +394,12 @@ EegListener<BaseError> eegListener = new EegListener<BaseError>() {
 StreamConfig streamConfig = new StreamConfig.Builder(eegListener)
 .setNotificationPeriod(20000)
 .useQualities()
-.configureHeadset(new EegStreamConfig.Builder()
-                                    .useP300()
-                                    .mtu(47)
-                                    .listenToDeviceStatus(deviceStatusListener)
-                                    .enableDcOffset()
-                                    .create())
+.configureAcquisitionFromDeviceCommand(
+    new DeviceStreamingCommands.Mtu(47),
+    new DeviceStreamingCommands.DcOffset(true),
+    new DeviceStreamingCommands.AmplifierGain(AmpGainConfig.AMP_GAIN_X12_DEFAULT),
+    new DeviceStreamingCommands.NotchFilter(FilterConfig.NOTCH_FILTER_50HZ)
+    new DeviceStreamingCommands.Triggers(true))
 .create();
 
 BluetoothStateListener bluetoothStateListener = new BluetoothStateListener(){ 
@@ -595,65 +595,6 @@ ConnectionConfig connectionConfig = new ConnectionConfig.Builder(bluetoothStateL
 sdkClient.connectBluetooth(connectionConfig);
 
 ```
-
-###### CONFIGURE THE HEADSET*
-
-The Headset Device has a default embedded configuration to acquire data related to the EEG signal. You can change some parameters of this configuration, such as the Maximum transmission unit (MTU), the Notch filter, the Gain, the P300 activation, the DC offset and Saturation notification.
-
-To configure a Melomind headset, you need to call the following method:
-
-```
-sdkClient.configureHeadset(eegStreamConfig);
-```
-
-**Parameters** 
-
-> `eegStreamConfig` is the headset configuration Object. It provides some methods to specify the configuration parameters. Use the `EegStreamConfig.Builder` to create an instance.
-
-Then you need to initialize the connection configuration by creating an instance of the `ConnectionConfig` Object. This instance must be initialized by calling the `ConnectionConfig` Builder whose only mandatory parameter is a non null instance of a`ConnectionStateListener` or `BluetoothStateListener` Object.
-
-```
-ConnectionConfig connectionConfig = new ConnectionConfig.Builder(bluetoothStateListener).create();
-
-```
-
- Moreover, you can specify some optional parameters :
-
-- `mtu(int value)` : the maximum transmission unit is the largest size packet the headset can send to the SDK. Its value must be included between -1 and 121 bytes. If you do not specify `mtu` or set the`value` parameter to -1 in your `EegStreamConfig` builder, the headset sends a packet of a default size.
-
-- `gain(AmpGainConfig value)` : the EEG signal must be amplified as it has a very low amplitude. Its value can be `AmpGainConfig.AMP_GAIN_X12_DEFAULT`  for a x12 amplification, `AmpGainConfig.AMP_GAIN_X8_MEDIUM`  for a x8 amplification, `AmpGainConfig.AMP_GAIN_X6_LOW for a x6 amplification, `or `AmpGainConfig.AMP_GAIN_X4_VLOW`  for a x4 amplification. If you do not specify `gain` in your `EegStreamConfig` builder, the headset uses a gain of x12.
-
-- `notchFilter(FilterConfig value)` : the headset applies a band stop filter to remove artefacts created by the current, that can be visible in the EEG signal measured by the electrodes. According to the country, the frequency of the current can be 50 Hz or 60 Hz or 70 Hz so this option allows you to choose the filter to apply. Its value can be `FilterConfig.NOTCH_FILTER_50HZ` for a 50 Hz filter, `FilterConfig.NOTCH_FILTER_60HZ` for a 60 Hz filter, or `FilterConfig.NOTCH_FILTER_DEFAULT`for a 70 Hz filter.  If you do not specify `notchFilter` in your `EegStreamConfig` builder, the headset applies a filter of 70 Hz.
-
-- `useP300()` : the headset detects P300 waves if you specify `useP300`. A P300 wave is an event related potential (ERP) component elicited *in* the process of decision making. Triggers synchronization requires to specify `useP300`. If you do not specify `useP300` in your `EegStreamConfig` builder, the headset do not detects the P300 waves.
-
-- `listenToDeviceStatus(DeviceStatusListener deviceStatusListener)` : the headset detects the signal status if you set a non null instance of `DeviceStatusListener` to the `deviceStatusListener` parameter. Use the `DeviceStatusListener` constructor to create the instance :
-
-  ```
-  DeviceStatusListener deviceStatusListener = new DeviceStatusListener<BaseError>() {
-  
-      @Override
-      public void onError(BaseError error, String additionnalInfo) {}
-  
-      @Override
-      public void onSaturationStateChanged(SaturationEvent saturation{}
-  
-      @Override
-      public void onNewDCOffsetMeasured(DCOffsets dcOffsets) {}
-  };
-  
-  ```
-
-  If this option is enabled, a request is sent to the headset to get the values of the DC offset and saturation when a EEG stream is started.
-
-  The headset response triggers the `onSaturationStateChanged` callback, that returns the current saturation in the `saturation` variable. You need to call `saturation.getSaturationCode()` to get its value. We consider that the EEG signal saturates if a distortion or a excessive amplitude is identified.  
-
-   The headset response triggers the `onNewDCOffsetMeasured` callback, that returns the value of the DC offset in the `dcOffsets` variable.  You need to call `dcOffsets.getOffset()` to get its value. We consider that the EEG signal has a DC offset if its average value over one period is not zero.  
-
-  If you do not specify `listenToDeviceStatus` in your `EegStreamConfig` builder, the headset won't send you the DC offset and saturation values.
-
-- `enableDcOffset()` : the DC offset is an optional status (cf`listenToDeviceStatus`above) that you can enable if you specify `enableDcOffset`. It means that this option allows you to receive the value of the current DC offset through the `onNewDCOffsetMeasured` callback if `listenToDeviceStatus`option is enabled in your `EegStreamConfig` builder. If you do not specify `enableDcOffset`, the headset won't send you the DC offset values.
-
 
 ###### CHANGING SERIAL NUMBER* 
 
