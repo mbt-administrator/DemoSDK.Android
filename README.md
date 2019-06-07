@@ -866,57 +866,6 @@ sdkClient.connectBluetooth(connectionConfig);
 
 ```
 
-###### CONNECT AUDIO* 
-
-To stream audio using Bluetooth to a connected headset that is not already connected in audio, you need to call the following method:
-
-```
-sdkClient.connectAudio(requestCallback)
-```
-
-**Parameters**
-
-> `requestCallback` is an instance of the `SimpleRequestCallback<byte[]>` Object.  It provides a callback that returns the response sent by the headset once the update command is received. Use the `SimpleRequestCallback` constructor to create the instance.
-
-This method sends a request to the headset to connect audio in Bluetooth. The headset response triggers the `onRequestComplete` callback, that return a success or failure status in the `object` variable after the connection. 
-
-Here is a full example of how to connect audio when a headset whose name is `melo_0123456789` is connected :
-
-```
-MbtClient sdkClient = MbtClient.getClientInstance();
-
-BluetoothStateListener bluetoothStateListener = new BluetoothStateListener(){ 
-
-@Override
-public void onNewState(BtState newState) {}
-
-@Override
-public void onDeviceConnected() {
-  
-    sdkClient.connectAudio(new SimpleRequestCallback<byte[]>() {
-            @Override
-            public void onRequestComplete(byte[] object) {
-            }
-        });
-}
-
-@Override 
-public void onDeviceDisconnected() {}
-
-@Override 
-public void onError(BaseError error, String additionnalInfo) {}
-
-}; 
-
-ConnectionConfig connectionConfig = new ConnectionConfig.Builder(bluetoothStateListener)
-.deviceName(“melo_0123456789”)
-.maxScanDuration(20000)
-.create();
-
-sdkClient.connectBluetooth(connectionConfig);
-
-```
-
 ###### REBOOT HEADSET* 
 
 To reboot a connected headset, you need to call the following method:
@@ -1000,6 +949,70 @@ public void onDeviceConnected() {
             public void onRequestComplete(byte[] object) {
             }
         });
+}
+
+@Override 
+public void onDeviceDisconnected() {}
+
+@Override 
+public void onError(BaseError error, String additionnalInfo) {}
+
+}; 
+
+ConnectionConfig connectionConfig = new ConnectionConfig.Builder(bluetoothStateListener)
+.deviceName(“melo_0123456789”)
+.maxScanDuration(20000)
+.connectAudio()
+.create();
+
+sdkClient.connectBluetooth(connectionConfig);
+
+```
+
+###### SYNCHRONIZE EXTERNAL TRIGGERS * 
+
+To receive triggers that mark timestamps for significant events in the EEG signal acquired by the connected headset, you need to connect a trigger emitter to the USB plug of the headset and call the following method:
+
+```
+sdkClient.startStream(new StreamConfig.Builder(eegListener)
+                            .configureAcquisitionFromDeviceCommand(new DeviceStreamingCommands.Triggers(true))
+                            .create());
+```
+
+
+This method sends a request to the headset to get the enable the triggers detection. The headset response returns the triggers to the SDK during the EEG streaming in progress.
+To get the triggers, you need to call the following getter on the streamed EEG packet :
+
+```
+mbtEEGPackets.getStatusData()
+
+Here is a full example of how to receive triggers with a connected headset whose name is `melo_0123456789` :
+
+```
+MbtClient sdkClient = MbtClient.getClientInstance();
+
+EegListener<BaseError> eegListener = new EegListener<BaseError>() {
+            @Override
+            public void onError(BaseError error, String additionnalInfo) {}
+
+            @Override
+            public void onNewPackets(@NonNull final MbtEEGPacket mbtEEGPackets) {
+                  ArrayList<Float> triggers = mbtEEGPackets.getStatusData();
+            }
+                
+        };
+        
+BluetoothStateListener bluetoothStateListener = new BluetoothStateListener(){ 
+
+@Override
+public void onNewState(BtState newState) {}
+
+@Override
+public void onDeviceConnected() {
+  
+    sdkClient.startStream(new StreamConfig.Builder(eegListener)
+                            .configureAcquisitionFromDeviceCommand(new DeviceStreamingCommands.Triggers(true))
+                            .create());
 }
 
 @Override 
