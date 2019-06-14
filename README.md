@@ -598,7 +598,7 @@ sdkClient.connectBluetooth(connectionConfig);
 
 ```
 ###### GET THE CONNECTED HEADSET INFO
-To get the current battery level of the connected headset, you need to call the following method:
+To get the connected headset information, you need to call the following method:
 
 ```
 sdkClient.requestCurrentConnectedDevice(simpleRequestCallback)
