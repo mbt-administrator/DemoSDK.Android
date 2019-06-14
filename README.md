@@ -63,8 +63,6 @@ The main features offered by the SDK are listed below.
 - Signal quality computation*
 - Muscular artefacts detection*
 - DC Offset & Saturation measurement*
-- OSC data streaming to a PC or Mac*
-- External triggers synchronisation*
 - Relaxation index computation*
 
 
@@ -77,6 +75,10 @@ The main features offered by the SDK are listed below.
 - P300* 
 - DC offset*
 - Saturation* 
+
+### Synchronisation
+- External triggers synchronisation*
+- OSC data streaming to a PC or Mac*
 
 ## IV.  Tutorial
 
@@ -139,8 +141,8 @@ android {
 Add the following dependency to your dependencies list. If the `2.0.5` version is not the last available version, replace `2.0.5` with the last version of the SDK:
 
 ```
-implementation 'staging.mybraintech.com:sdk-lite:2.0.5.1'
-implementation 'staging.mybraintech.com:sdk-lite:2.0.5.1:javadoc'
+implementation 'mybraintech.com:sdk-lite:2.0.5.1'
+implementation 'mybraintech.com:sdk-lite:2.0.5.1:javadoc'
 implementation 'com.android.support:appcompat-v7:28.0.0'
 ```
 
@@ -375,7 +377,7 @@ Moreover, you can specify some optional parameters :
 
 *Note : This value is in milliseconds.*
 
-- `configureAcquisitionFromDeviceCommand(DeviceStreamingCommands... deviceCommands)` *: you can send commands to change the headset device notch filter, gain, MTU, or enable DC Offset and Triggers detection before starting the stream. You can send one or more commands by separating them with a commma in the method parameters. If you do not specify any `configureAcquisitionFromDeviceCommand` in your `StreamConfig` builder, the default filter, gain and MTU are used. 
+- `configureAcquisitionFromDeviceCommand(DeviceStreamingCommands... deviceCommands)` *: you can send commands to change the headset device notch filter, gain, MTU, or enable DC Offset and Triggers detection before starting the stream. You can send one or more commands by separating them with a comma in the method parameters. If you do not specify any `configureAcquisitionFromDeviceCommand` in your `StreamConfig` builder, the default filter, gain and MTU are used and DC offset, saturation and triggers are not detected. 
 
 Here is a full example of streaming EEG data when a headset is connected :
 
@@ -576,6 +578,72 @@ public void onNewState(BtState newState) {}
 @Override
 public void onDeviceConnected() {
     sdkClient.readBattery(deviceBatteryListener)
+}
+
+@Override 
+public void onDeviceDisconnected() {}
+
+@Override 
+public void onError(BaseError error, String additionnalInfo) {}
+
+}; 
+
+ConnectionConfig connectionConfig = new ConnectionConfig.Builder(bluetoothStateListener)
+.deviceName(“melo_0123456789”)
+.maxScanDuration(20000)
+.connectAudio()
+.create();
+
+sdkClient.connectBluetooth(connectionConfig);
+
+```
+###### GET THE CONNECTED HEADSET INFO
+To get the current battery level of the connected headset, you need to call the following method:
+
+```
+sdkClient.requestCurrentConnectedDevice(simpleRequestCallback)
+```
+
+**Parameters**
+
+> `simpleRequestCallback` is an instance of the `SimpleRequestCallback<MbtDevice>` Object.  It provides a callback that returns the current connected device as a `MbtDevice` Object. Use the `SimpleRequestCallback<MbtDevice>` constructor to create the instance.
+
+This method sends a request to get the connected headset information bundled in a `MbtDevice` Object. The headset response triggers the `onRequestComplete` callback, that return the connected headset in the `device` variable. The 
+
+ Before calling this method, you need to create a non null instance of the `SimpleRequestCallback<MbtDevice>` Object : 
+
+```
+SimpleRequestCallback<MbtDevice> simpleRequestCallback = new SimpleRequestCallback<MbtDevice>() {
+            @Override
+            public void onRequestComplete(MbtDevice device) {
+               
+            }
+};
+```
+
+ The `onRequestComplete()` method returns a null `device` if no headset is connected. 
+
+For example, you can get the value of the Bluetooth address or the serial number of the connected headset by calling one of the available getters provided by the `MbtDevice` Object.
+
+Here is a full example to get the connected headset serial number when a headset is connected :
+
+```
+MbtClient sdkClient = MbtClient.getClientInstance();
+
+BluetoothStateListener bluetoothStateListener = new BluetoothStateListener(){ 
+
+@Override
+public void onNewState(BtState newState) {}
+
+@Override
+public void onDeviceConnected() {
+    sdkClient.requestCurrentConnectedDevice(new SimpleRequestCallback<MbtDevice>() {
+            @Override
+            public void onRequestComplete(MbtDevice device) {
+                String serialNumber = device.getSerialNumber();
+
+            }
+        });
 }
 
 @Override 
@@ -969,9 +1037,16 @@ sdkClient.connectBluetooth(connectionConfig);
 
 ```
 
+##### Synchronisation Features
+
 ###### SYNCHRONIZE EXTERNAL TRIGGERS * 
 
-To receive triggers that mark timestamps for significant events in the EEG signal acquired by the connected headset, you need to connect a trigger emitter to the USB plug of the headset and call the following method:
+To receive triggers that mark timestamps for significant events in the EEG signal acquired by the connected headset, you need to :
+- turn on the headset
+- connect a trigger emitter to the USB plug of the headset (the blue LED might stop flashing)
+- click about 5 seconds (until the blue LED flashs again) on the + button 
+- enable the trigger configuration option when you start a new stream 
+- retrieve the triggers sent by calling the `getStatusData()` when the onNewPackets callback is triggered.
 
 ```
 sdkClient.startStream(new StreamConfig.Builder(eegListener)
@@ -980,11 +1055,13 @@ sdkClient.startStream(new StreamConfig.Builder(eegListener)
 ```
 
 
-This method sends a request to the headset to get the enable the triggers detection. The headset response returns the triggers to the SDK during the EEG streaming in progress.
+This method sends a request to the headset to enable the triggers detection. The headset response returns the triggers to the SDK when a EEG streaming is in progress.
 To get the triggers, you need to call the following getter on the streamed EEG packet :
 
 ```
 mbtEEGPackets.getStatusData()
+
+```
 
 Here is a full example of how to receive triggers with a connected headset whose name is `melo_0123456789` :
 
@@ -1032,6 +1109,7 @@ ConnectionConfig connectionConfig = new ConnectionConfig.Builder(bluetoothStateL
 sdkClient.connectBluetooth(connectionConfig);
 
 ```
+
 
 ## V.Appendix
 
