@@ -138,11 +138,11 @@ android {
 }
 ```
 
-Add the following dependency to your dependencies list. If the `2.0.5` version is not the last available version, replace `2.0.5` with the last version of the SDK:
+Add the following dependency to your dependencies list. If the `2.0.5.2` version is not the last available version, replace `2.0.5.2` with the last version of the SDK:
 
 ```
-implementation 'mybraintech.com:sdk-lite:2.0.5.1'
-implementation 'mybraintech.com:sdk-lite:2.0.5.1:javadoc'
+implementation 'staging.mybraintech.com:sdk-lite:2.0.5.1.1'
+implementation 'staging.mybraintech.com:sdk-lite:2.0.5.1.1:javadoc'
 implementation 'com.android.support:appcompat-v7:28.0.0'
 ```
 
