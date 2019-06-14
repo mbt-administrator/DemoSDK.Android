@@ -38,5 +38,6 @@
     <string name="channel_2_qc">Channel 2 Quality : </string>
     <string name="channel_1">Channel 1 : P3</string>
     <string name="channel_2">Channel 2 : P4</string>
+    <string name="status">Triggers</string>
 
 </resources>

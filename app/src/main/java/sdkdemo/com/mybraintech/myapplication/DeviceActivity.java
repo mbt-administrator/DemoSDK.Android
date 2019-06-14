@@ -22,6 +22,7 @@ import com.github.mikephil.charting.data.LineDataSet;
 import java.util.ArrayList;
 import java.util.Objects;
 
+import config.MbtConfig;
 import config.StreamConfig;
 import core.bluetooth.BtState;
 import core.device.model.MbtDevice;
@@ -73,6 +74,11 @@ public class DeviceActivity extends AppCompatActivity {
      * Object used to hold all the curves to plot on the graph
      */
     private LineData eegLineData;
+
+    /**
+     * Object used to bundle all the triggers data to plot on the graph
+     */
+    private LineDataSet status;
 
     /**
      * Object used to bundle all the raw EEG data of the first channel (P3) to plot on the graph
@@ -183,7 +189,7 @@ public class DeviceActivity extends AppCompatActivity {
 
                 if(isStreaming){
                     if(eegGraph!=null){
-                        addEegDataToGraph(mbtEEGPackets.getChannelsData());
+                        addDataToGraph(mbtEEGPackets.getChannelsData(), mbtEEGPackets.getStatusData());
                     }
                 }
             }
@@ -325,6 +331,7 @@ public class DeviceActivity extends AppCompatActivity {
                 if(!isStreaming) {
                     startStream(new StreamConfig.Builder(eegListener)
                             .setNotificationPeriod(MbtFeatures.DEFAULT_CLIENT_NOTIFICATION_PERIOD)
+
                             .create());
                 }else { //streaming is in progress : stopping streaming
                     stopStream(); // set false to isStreaming et null to the eegListener
@@ -368,8 +375,19 @@ public class DeviceActivity extends AppCompatActivity {
     public void initEegGraph(){
         eegGraph = findViewById(R.id.eegGraph);
 
+        status = new LineDataSet(new ArrayList<Entry>(MbtConfig.getEegPacketLength()), getString(R.string.status));
         channel1 = new LineDataSet(new ArrayList<Entry>(250), getString(R.string.channel_1));
         channel2 = new LineDataSet(new ArrayList<Entry>(250), getString(R.string.channel_2));
+
+        status.setDrawValues(false);
+        status.disableDashedLine();
+        status.setDrawCircleHole(false);
+        status.setDrawCircles(false);
+        status.setColor(Color.GREEN);
+        status.setDrawFilled(true);
+        status.setFillColor(Color.GREEN);
+        status.setFillAlpha(40);
+        status.setAxisDependency(YAxis.AxisDependency.RIGHT);
 
         channel1.setDrawValues(false);
         channel1.disableDashedLine();
@@ -389,6 +407,7 @@ public class DeviceActivity extends AppCompatActivity {
 
         eegLineData.addDataSet(channel1);
         eegLineData.addDataSet(channel2);
+        eegLineData.addDataSet(status);
 
         eegGraph.setData(eegLineData);
 
@@ -416,8 +435,9 @@ public class DeviceActivity extends AppCompatActivity {
     /**
      * Method called to add the entries to the graph every second
      * @param channelData the matrix of raw EEG data of the last second
+     * @param statusData the list of triggers
      */
-    private void addEegDataToGraph(ArrayList<ArrayList<Float>> channelData) {
+    private void addDataToGraph(ArrayList<ArrayList<Float>> channelData, ArrayList<Float> statusData) {
 
         LineData data = eegGraph.getData();
         if (data != null) {
@@ -427,13 +447,18 @@ public class DeviceActivity extends AppCompatActivity {
             }else{
                 if(channelsHasTheSameNumberOfData(channelData)){
                     for(int currentEegData = 0; currentEegData< channelData.get(0).size(); currentEegData++){ //for each number of eeg data
+                        //plot the EEG signal
                         for (int currentChannel = 0; currentChannel < MbtFeatures.getNbChannels(MbtDeviceType.MELOMIND) ; currentChannel++){
                             data.addEntry(new Entry(data.getDataSets().get(currentChannel).getEntryCount(), channelData.get(currentChannel).get(currentEegData) *1000000),currentChannel);
                         }
+                        if(statusData != null) //plot the triggers
+                        data.addEntry(new Entry(data.getDataSets().get(data.getDataSetCount()-1).getEntryCount(), statusData.get(currentEegData).isNaN() ? Float.NaN : statusData.get(currentEegData)), data.getDataSetCount()-1);
+
                     }
                 }else{
                     throw new IllegalStateException("Channels do not have the same amount of data");
                 }
+
             }
             data.notifyDataChanged();
             eegGraph.notifyDataSetChanged();// let the chart know it's data has changed
