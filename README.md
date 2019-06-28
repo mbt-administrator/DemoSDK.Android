@@ -36,7 +36,7 @@ This library is currently distributed as a .aar file. Its content is obfuscated.
 
 ------
 
-The current version of the SDK is 2.0.5.1 Further updates will be released in the following months with more features. 
+The current version of the SDK is 2.0.5 Further updates will be released in the following months with more features. 
 
 Using the My Brain Technologies’ SDK requires to install an IDE for developing Android applications. 
 *Note : this document explains how to install the SDK on Android Studio IDE only.*
@@ -56,6 +56,7 @@ The main features offered by the SDK are listed below.
 - Bluetooth connection with a Melomind headset
 - Bluetooth data transfer from the headset to the SDK
 - Bluetooth command & data transfer from the SDK to the headset*
+- Configuration of Bluetooth paramters such as the Maximum Transmission Unit (maximum size of the data sent by the headset to the SDK)
 
 ### EEG
 
@@ -69,10 +70,8 @@ The main features offered by the SDK are listed below.
 ### Device 
 
  Configuration of the following customizable parameters for the Melomind headset :
-- Maximum Transmission Unit (maximum size of the data sent by the headset to the SDK)
 - Notch filter* 
 - Gain* 
-- P300* 
 - DC offset*
 - Saturation* 
 
@@ -141,8 +140,8 @@ android {
 Add the following dependency to your dependencies list. If the `2.0.5` version is not the last available version, replace `2.0.5` with the last version of the SDK:
 
 ```
-implementation 'mybraintech.com:sdk-lite:2.0.5.1'
-implementation 'mybraintech.com:sdk-lite:2.0.5.1:javadoc'
+implementation 'mybraintech.com:sdk-lite:2.0.5'
+implementation 'mybraintech.com:sdk-lite:2.0.5:javadoc'
 implementation 'com.android.support:appcompat-v7:28.0.0'
 ```
 
@@ -181,6 +180,13 @@ sdkClient = MbtClient.getClientInstance();
 
 You just need to be sure that you have called 
 `MbtClient.init()` at least once. This method do not change the value of the client instance if it has already been initialized.
+
+
+To reset your client instance, you can call the following method:
+
+```
+sdkClient = MbtClient.resetClientInstance();
+```
 
 The application is now set up to interact with the SDK features.
 
@@ -283,6 +289,8 @@ ConnectionConfig connectionConfig = new ConnectionConfig.Builder(bluetoothStateL
 
   *Note : This option must be disabled if you connect the headset with a Jack cable. To disable it, do not specify `connectAudio` in your `StreamConfig` builder.* 
 
+- `mtu(int mtu)` * : the maximum transmission unit is the maximum size of the data packet sent by the headset to the SDK. This value is updated during the connection procress and can't be changed once the device is connected. A minimum value of **23** and a maximum value of **121** are mandatory. If you do not specify `mtu`in your `ConnectionConfig` builder, the mtu is set to 47.
+
 Here is a full example of connection to a Melomind headset whose name is `melo_0123456789`, with audio stream option enabled :
 
 ```
@@ -377,7 +385,7 @@ Moreover, you can specify some optional parameters :
 
 *Note : This value is in milliseconds.*
 
-- `configureAcquisitionFromDeviceCommand(DeviceStreamingCommands... deviceCommands)` *: you can send commands to change the headset device notch filter, gain, MTU, or enable DC Offset and Triggers detection before starting the stream. You can send one or more commands by separating them with a comma in the method parameters. If you do not specify any `configureAcquisitionFromDeviceCommand` in your `StreamConfig` builder, the default filter, gain and MTU are used and DC offset, saturation and triggers are not detected. 
+- `configureAcquisitionFromDeviceCommand(DeviceStreamingCommands... deviceCommands)` *: you can send commands to change the headset device notch filter, gain, or enable DC Offset, saturation and triggers detection before starting the stream. You can send one or more commands by separating them with a comma in the method parameters. If you do not specify any `configureAcquisitionFromDeviceCommand` in your `StreamConfig` builder, the default filter, gain are used and DC offset, saturation and triggers are not detected. 
 
 Here is a full example of streaming EEG data when a headset is connected :
 
@@ -397,7 +405,6 @@ StreamConfig streamConfig = new StreamConfig.Builder(eegListener)
 .setNotificationPeriod(20000)
 .useQualities()
 .configureAcquisitionFromDeviceCommand(
-    new DeviceStreamingCommands.Mtu(47),
     new DeviceStreamingCommands.DcOffset(true),
     new DeviceStreamingCommands.AmplifierGain(AmpGainConfig.AMP_GAIN_X12_DEFAULT),
     new DeviceStreamingCommands.NotchFilter(FilterConfig.NOTCH_FILTER_50HZ)
@@ -672,17 +679,17 @@ Each headset has a unique serial number to identify it.
 To change the serial number of the connected headset, you need to call the following method:
 
 ```
-sdkClient.updateSerialNumber(serialNumber, requestCallback)
+sdkClient.updateSerialNumber(serialNumber, commandCallback)
 ```
 
 **Parameters**
 
-> `serialNumber` is an instance of the `String` Object.  It must contains the new serial number to set to the connected headset.
-> `requestCallback` is an instance of the `SimpleRequestCallback<byte[]>` Object.  It provides a callback that returns the response sent by the headset once the update command is received. Use the `SimpleRequestCallback` constructor to create the instance.
+> `serialNumber` is an instance of the `String` Object.  It must contains a non null & non empty new serial number to set to the connected headset.
+> `commandCallback` is an instance of the `CommandCallback<byte[]>` Object.  It provides a `onRequestSent` callback that notify the client when the request has been successfully sent, a `onResponseReceived` callback that returns a the response sent by the headset once the update command is received, and a `onError` callback triggered if the command sending operation encountered a problem. Use the `CommandCallback` constructor to create the instance.
 
-This method sends a request to the headset to change its serial number. The headset response triggers the `onRequestComplete` callback, that return the current value of the serial number `object` variable after the update. 
+This method sends a request to the headset to change its serial number. The headset response triggers the `onResponseReceived` callback, that return the current value of the serial number `response` variable after the update. 
 
-Here is a full example of how to change the serial number to `melo_9876543210` when a headset whose name is `melo_0123456789` is connected :
+Here is a full example of how to change the serial number to `9876543210` when a headset whose name is `melo_0123456789` is connected :
 
 ```
 MbtClient sdkClient = MbtClient.getClientInstance();
@@ -695,10 +702,16 @@ public void onNewState(BtState newState) {}
 @Override
 public void onDeviceConnected() {
   
-    sdkClient.updateSerialNumber("melo_987654321", new SimpleRequestCallback<byte[]>() {
+    sdkClient.updateSerialNumber("987654321", new CommandCallback<byte[]>() {
             @Override
-            public void onRequestComplete(byte[] object) {
+            public void onResponseReceived(MbtCommand request, byte[] response) {
+               String serialNumber = new String(response);
             }
+            
+            @Override
+            public void onError(MbtCommand request, BaseError error, String additionalInfo) { }
+            @Override
+            public void onRequestSent(MbtCommand request) { }
         });
 }
 
@@ -720,60 +733,6 @@ sdkClient.connectBluetooth(connectionConfig);
 
 ```
 
-
-###### CHANGING PRODUCT NAME* 
-
-Each headset has a product name that matchs most of the time the serial number.
-To change the product name of the connected headset, you need to call the following method:
-
-```
-sdkClient.updateProductName(productName, requestCallback)
-```
-
-**Parameters**
-
-> `productName` is an instance of the `String` Object.  It must contains the new product name to set to the connected headset.
-> `requestCallback` is an instance of the `SimpleRequestCallback<byte[]>` Object.  It provides a callback that returns the response sent by the headset once the update command is received. Use the `SimpleRequestCallback` constructor to create the instance.
-
-This method sends a request to the headset to change its product name. The headset response triggers the `onRequestComplete` callback, that return the current value of the product name `object` variable after the update. 
-
-Here is a full example of how to change the product name to `example` when a headset whose name is `melo_0123456789` is connected :
-
-```
-MbtClient sdkClient = MbtClient.getClientInstance();
-
-BluetoothStateListener bluetoothStateListener = new BluetoothStateListener(){ 
-
-@Override
-public void onNewState(BtState newState) {}
-
-@Override
-public void onDeviceConnected() {
-  
-    sdkClient.updateProductName("example", new SimpleRequestCallback<byte[]>() {
-            @Override
-            public void onRequestComplete(byte[] object) {
-            }
-        });
-}
-
-@Override 
-public void onDeviceDisconnected() {}
-
-@Override 
-public void onError(BaseError error, String additionnalInfo) {}
-
-}; 
-
-ConnectionConfig connectionConfig = new ConnectionConfig.Builder(bluetoothStateListener)
-.deviceName(“melo_0123456789”)
-.maxScanDuration(20000)
-.connectAudio()
-.create();
-
-sdkClient.connectBluetooth(connectionConfig);
-
-```
 
 ###### CHANGING EXTERNAL NAME* 
 
@@ -783,17 +742,17 @@ Each headset has an external name that matchs the QR code number.
 To change the external name of the connected headset, you need to call the following method:
 
 ```
-sdkClient.updateExternalName(productName, requestCallback)
+sdkClient.updateExternalName(externalName, commandCallback)
 ```
 
 **Parameters**
 
 > `externalName` is an instance of the `String` Object.  It must contains the new external name to set to the connected headset.
-> `requestCallback` is an instance of the `SimpleRequestCallback<byte[]>` Object.  It provides a callback that returns the response sent by the headset once the update command is received. Use the `SimpleRequestCallback` constructor to create the instance.
+> `commandCallback` is an instance of the `CommandCallback<byte[]>` Object.  It provides a `onRequestSent` callback that notify the client when the request has been successfully sent, a `onResponseReceived` callback that returns a the response sent by the headset once the update command is received, and a `onError` callback triggered if the command sending operation encountered a problem. Use the `CommandCallback` constructor to create the instance.
 
-This method sends a request to the headset to change its external name. The headset response triggers the `onRequestComplete` callback, that return the current value of the product name `object` variable after the update. 
+This method sends a request to the headset to change its external name. The headset response triggers the `onResponseReceived` callback, that return the current value of the external name `response` variable after the update. 
 
-Here is a full example of how to change the product name to `melo_9876543210` when a headset whose name is `melo_0123456789` is connected :
+Here is a full example of how to change the external name to `MM12345678` when a headset whose name is `melo_0123456789` is connected :
 
 ```
 MbtClient sdkClient = MbtClient.getClientInstance();
@@ -806,10 +765,16 @@ public void onNewState(BtState newState) {}
 @Override
 public void onDeviceConnected() {
   
-    sdkClient.updateProductName("melo_9876543210", new SimpleRequestCallback<byte[]>() {
+    sdkClient.updateExternalName("MM12345678", new SimpleRequestCallback<byte[]>() {
             @Override
-            public void onRequestComplete(byte[] object) {
+            public void onResponseReceived(MbtCommand request, byte[] response) {
+               String externalName = new String(response);
             }
+            
+            @Override
+            public void onError(MbtCommand request, BaseError error, String additionalInfo) { }
+            @Override
+            public void onRequestSent(MbtCommand request) { }
         });
 }
 
@@ -836,14 +801,21 @@ sdkClient.connectBluetooth(connectionConfig);
 To stream audio using Bluetooth to a connected headset that is not already connected in audio, you need to call the following method:
 
 ```
-sdkClient.connectAudio(requestCallback)
+sdkClient.connectAudio(commandCallback)
 ```
 
 **Parameters**
 
-> `requestCallback` is an instance of the `SimpleRequestCallback<byte[]>` Object.  It provides a callback that returns the response sent by the headset once the update command is received. Use the `SimpleRequestCallback` constructor to create the instance.
+> `commandCallback` is an instance of the `CommandCallback<byte[]>` Object.  It provides a `onRequestSent` callback that notify the client when the request has been successfully sent, a `onResponseReceived` callback that returns a the response sent by the headset once the update command is received, and a `onError` callback triggered if the command sending operation encountered a problem. Use the `CommandCallback` constructor to create the instance.
 
-This method sends a request to the headset to connect audio in Bluetooth. The headset response triggers the `onRequestComplete` callback, that return a success or failure status in the `object` variable after the connection. 
+
+This method sends a request to the headset to connect audio in Bluetooth. The headset response triggers the `onResponse` callback, that return a success or failure status in the `response` variable. The possible responses returned are :
+- Bad BD Address : 0x02
+- Already connected : 0x04 
+- Connection timeout (after 10 sec) : 0x08     
+- Invalid Linkkey : 0x10
+- Jack cable connected : 0x20
+- Success : 0x80   
 
 Here is a full example of how to connect audio when a headset whose name is `melo_0123456789` is connected :
 
@@ -858,10 +830,16 @@ public void onNewState(BtState newState) {}
 @Override
 public void onDeviceConnected() {
   
-    sdkClient.connectAudio(new SimpleRequestCallback<byte[]>() {
-            @Override
-            public void onRequestComplete(byte[] object) {
+    sdkClient.connectAudio(new CommandCallback<byte[]>() {
+           @Override
+            public void onResponseReceived(MbtCommand request, byte[] response) {
+               boolean isSuccess = ((reponse & 0x80) == 0x80) ;
             }
+            
+            @Override
+            public void onError(MbtCommand request, BaseError error, String additionalInfo) { }
+            @Override
+            public void onRequestSent(MbtCommand request) { }
         });
 }
 
@@ -892,9 +870,11 @@ sdkClient.disconnectAudio(requestCallback)
 
 **Parameters**
 
-> `requestCallback` is an instance of the `SimpleRequestCallback<byte[]>` Object.  It provides a callback that returns the response sent by the headset once the update command is received. Use the `SimpleRequestCallback` constructor to create the instance.
+> `commandCallback` is an instance of the `CommandCallback<byte[]>` Object.  It provides a `onRequestSent` callback that notify the client when the request has been successfully sent, a `onResponseReceived` callback that returns a the response sent by the headset once the update command is received, and a `onError` callback triggered if the command sending operation encountered a problem. Use the `CommandCallback` constructor to create the instance.
 
-This method sends a request to the headset to disconnect audio in Bluetooth. The headset response triggers the `onRequestComplete` callback, that return a success or failure status in the `object` variable after the disconnection. 
+This method sends a request to the headset to disconnect audio in Bluetooth. The headset response triggers the `onResponse` callback, that return a success or failure status in the `response` variable. The possible responses returned are :
+- Failure : 0x01
+- Success : 0xFF   
 
 Here is a full example of how to disconnect audio when a headset whose name is `melo_0123456789` is connected in audio :
 
@@ -909,10 +889,16 @@ public void onNewState(BtState newState) {}
 @Override
 public void onDeviceConnected() {
   
-    sdkClient.disconnectAudio(new SimpleRequestCallback<byte[]>() {
-            @Override
-            public void onRequestComplete(byte[] object) {
+    sdkClient.disconnectAudio(new CommandCallback<byte[]>() {
+           @Override
+            public void onResponseReceived(MbtCommand request, byte[] response) {
+               boolean isFailure = ((reponse & 0x01) == 0x01);
             }
+            
+            @Override
+            public void onError(MbtCommand request, BaseError error, String additionalInfo) { }
+            @Override
+            public void onRequestSent(MbtCommand request) { }
         });
 }
 
@@ -939,14 +925,14 @@ sdkClient.connectBluetooth(connectionConfig);
 To reboot a connected headset, you need to call the following method:
 
 ```
-sdkClient.rebootDevice(requestCallback)
+sdkClient.rebootDevice(commandCallback)
 ```
 
 **Parameters**
 
-> `requestCallback` is an instance of the `SimpleRequestCallback<byte[]>` Object.  It provides a callback that returns the response sent by the headset once the update command is received. Use the `SimpleRequestCallback` constructor to create the instance.
+> `simpleCommandCallback` is an instance of the `SimpleCommandCallback<byte[]>` Object.  It provides a `onRequestSent` callback that notify the client when the request has been successfully sent, and a `onError` callback triggered if the command sending operation encountered a problem. Use the `SimpleCommandCallback` constructor to create the instance.
 
-This method sends a request to the headset to reboot. The headset response triggers the `onRequestComplete` callback, that return a success or failure status in the `object` variable after the reboot. 
+This method sends a request to the headset to reboot. The headset doesn't send back any response.
 
 Here is a full example of how to reboot a connected headset whose name is `melo_0123456789` :
 
@@ -961,10 +947,11 @@ public void onNewState(BtState newState) {}
 @Override
 public void onDeviceConnected() {
   
-    sdkClient.rebootDevice(new SimpleRequestCallback<byte[]>() {
+    sdkClient.rebootDevice(new CommandCallback<byte[]>() {
             @Override
-            public void onRequestComplete(byte[] object) {
-            }
+            public void onError(MbtCommand request, BaseError error, String additionalInfo) { }
+            @Override
+            public void onRequestSent(MbtCommand request) { }
         });
 }
 
@@ -995,9 +982,12 @@ sdkClient.getDeviceSystemStatus(requestCallback)
 
 **Parameters**
 
-> `requestCallback` is an instance of the `SimpleRequestCallback<byte[]>` Object.  It provides a callback that returns the response sent by the headset once the update command is received. Use the `SimpleRequestCallback` constructor to create the instance.
+> `commandCallback` is an instance of the `CommandCallback<byte[]>` Object.  It provides a `onRequestSent` callback that notify the client when the request has been successfully sent, a `onResponseReceived` callback that returns a the response sent by the headset once the update command is received, and a `onError` callback triggered if the command sending operation encountered a problem. Use the `CommandCallback` constructor to create the instance.
 
-This method sends a request to the headset to get the current headset system status. The headset response triggers the `onRequestComplete` callback, that return the value o the status in the `object` variable. 
+This method sends a request to the headset to get the current headset system status. The headset response triggers the `onResponseReceived` callback, that return the value o the status in the `response` variable. The possible responses returned for each element of the array are :
+- No info : 0x00
+- Ok : 0x01
+- Error : 0xFF   
 
 Here is a full example of how to get the system status of a connected headset whose name is `melo_0123456789` :
 
@@ -1014,8 +1004,17 @@ public void onDeviceConnected() {
   
     sdkClient.getDeviceSystemStatus(new SimpleRequestCallback<byte[]>() {
             @Override
-            public void onRequestComplete(byte[] object) {
+            public void onResponseReceived(MbtCommand request, byte[] response) {
+               byte processorStatus = response[0];
+               byte externalMemoryStatus = response[1];
+               byte audioStatus = response[2];
+               byte adsStatus = response[3];
             }
+            
+            @Override
+            public void onError(MbtCommand request, BaseError error, String additionalInfo) { }
+            @Override
+            public void onRequestSent(MbtCommand request) { }
         });
 }
 
