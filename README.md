@@ -765,7 +765,7 @@ public void onNewState(BtState newState) {}
 @Override
 public void onDeviceConnected() {
   
-    sdkClient.updateExternalName("MM12345678", new SimpleRequestCallback<byte[]>() {
+    sdkClient.updateExternalName("MM12345678", new CommandCallback<byte[]>() {
             @Override
             public void onResponseReceived(MbtCommand request, byte[] response) {
                String externalName = new String(response);
@@ -1002,7 +1002,7 @@ public void onNewState(BtState newState) {}
 @Override
 public void onDeviceConnected() {
   
-    sdkClient.getDeviceSystemStatus(new SimpleRequestCallback<byte[]>() {
+    sdkClient.getDeviceSystemStatus(new CommandCallback<byte[]>() {
             @Override
             public void onResponseReceived(MbtCommand request, byte[] response) {
                byte processorStatus = response[0];
