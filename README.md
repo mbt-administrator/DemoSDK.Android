@@ -36,7 +36,7 @@ This library is currently distributed as a .aar file. Its content is obfuscated.
 
 ------
 
-The current version of the SDK is 2.0.5 Further updates will be released in the following months with more features. 
+The current version of the SDK is 2.1.1. Further updates will be released in the following months with more features. 
 
 Using the My Brain Technologies’ SDK requires to install an IDE for developing Android applications. 
 *Note : this document explains how to install the SDK on Android Studio IDE only.*
@@ -74,6 +74,7 @@ The main features offered by the SDK are listed below.
 - Gain* 
 - DC offset*
 - Saturation* 
+- Firmware update*
 
 ### Synchronisation
 - External triggers synchronisation*
@@ -137,11 +138,11 @@ android {
 }
 ```
 
-Add the following dependency to your dependencies list. If the `2.0.5` version is not the last available version, replace `2.0.5` with the last version of the SDK:
+Add the following dependency to your dependencies list. If the `2.1.1` version is not the last available version, replace `2.1.1` with the last version of the SDK:
 
 ```
-implementation 'mybraintech.com:sdk-lite:2.0.5'
-implementation 'mybraintech.com:sdk-lite:2.0.5:javadoc'
+implementation 'mybraintech.com:sdk-lite:2.1.1'
+implementation 'mybraintech.com:sdk-lite:2.1.1:javadoc'
 implementation 'com.android.support:appcompat-v7:28.0.0'
 ```
 
@@ -671,7 +672,7 @@ sdkClient.connectBluetooth(connectionConfig);
 
 ```
 
-###### CHANGING SERIAL NUMBER* 
+###### CHANGING SERIAL NUMBER * 
 
 Each headset has a unique serial number to identify it.
 *Warning : If you change the serial number, the associated QR code scan won't work anymore*
@@ -734,7 +735,7 @@ sdkClient.connectBluetooth(connectionConfig);
 ```
 
 
-###### CHANGING EXTERNAL NAME* 
+###### CHANGING EXTERNAL NAME * 
 
 Each headset has an external name that matchs the QR code number.
 *Warning : If you change the external name, the QR code scan won't work anymore*
@@ -796,7 +797,7 @@ sdkClient.connectBluetooth(connectionConfig);
 
 ```
 
-###### CONNECT AUDIO* 
+###### CONNECT AUDIO * 
 
 To stream audio using Bluetooth to a connected headset that is not already connected in audio, you need to call the following method:
 
@@ -860,7 +861,7 @@ sdkClient.connectBluetooth(connectionConfig);
 
 ```
 
-###### DISCONNECT AUDIO* 
+###### DISCONNECT AUDIO * 
 
 To disconnect audio on a connected headset, you need to call the following method:
 
@@ -920,7 +921,7 @@ sdkClient.connectBluetooth(connectionConfig);
 
 ```
 
-###### REBOOT HEADSET* 
+###### REBOOT HEADSET * 
 
 To reboot a connected headset, you need to call the following method:
 
@@ -972,6 +973,7 @@ ConnectionConfig connectionConfig = new ConnectionConfig.Builder(bluetoothStateL
 sdkClient.connectBluetooth(connectionConfig);
 
 ```
+
 ###### GET SYSTEM STATUS * 
 
 To get the device system status of the connected headset, you need to call the following method:
@@ -1017,6 +1019,78 @@ public void onDeviceConnected() {
             public void onRequestSent(MbtCommand request) { }
         });
 }
+
+@Override 
+public void onDeviceDisconnected() {}
+
+@Override 
+public void onError(BaseError error, String additionnalInfo) {}
+
+}; 
+
+ConnectionConfig connectionConfig = new ConnectionConfig.Builder(bluetoothStateListener)
+.deviceName(“melo_0123456789”)
+.maxScanDuration(20000)
+.connectAudio()
+.create();
+
+sdkClient.connectBluetooth(connectionConfig);
+
+```
+
+###### UPDATE FIRMWARE *
+
+To upgrade or downgrade the firmware installed on the connected headset, you need to call the following method:
+
+```
+sdkClient.updateFirmware(firmwareVersion, stateListener)
+```
+
+**Parameters**
+
+> `firmwareVersion` is an instance of the `FirmwareVersion` Object. This object holds the number of the firmware version formatted as a String composed of 3 digits separated by a comma, as the following example : `"1.7.4"`. The FirmwareVersion constructor requires a non null and non empty String and looks like the following example : `new FirmwareVersion("1.7.4")`.
+
+> `stateListener` is an instance of the `OADStateListener<BaseError>` Object. It provides 3 callbacks that inform the client of the update progress :
+- the `onStateChanged` callback notifies the client when the a new step of the update is completed. In other words, it returns the current state for each step of the update process. To better understand the value and the meaning of the current state, a list of states is available in the Appendix (cf OAD States). 
+- the `onProgressPercentChanged` callback is triggered when the firmware transfer progress changes. A progress of 0 means that the transfer has not started yet. A progress of 100 means that the transfer is complete.
+- the `onError` callback is triggered if the update operation encountered a problem and returns information about the origin of the failure. All error cases are listed in the Appendix (cf Errors).
+Use the `OADStateListener` constructor to create the instance.
+
+This method downloads and installs a firmware using the Over-the-Air Download principle through Bluetooth. No wifi is required.
+An update approximately lasts 4 minutes as it contains several steps that are handled one after another (no parallel tasks).
+If the headset is streaming EEG data when the updateFirmware method is called, the SDK stops the streaming to perform the update.
+Also, if the headset is connected for audio streaming, the SDK disconnects it, and reconnects it once the update is completed. 
+*Warning : A disconnection, reconnection, and reset of the Android device Bluetooth occurs at the end of the update.*
+
+Here is a full example of how to install the last available firmware on a connected headset whose name is `melo_0123456789` :
+
+```
+MbtClient sdkClient = MbtClient.getClientInstance();
+
+BluetoothStateListener bluetoothStateListener = new BluetoothStateListener(){ 
+
+@Override
+public void onNewState(BtState newState) {}
+
+@Override
+public void onDeviceConnected() {
+      sdkClient.updateFirmware(
+      new FirmwareVersion("1.7.4"), new OADStateListener<BaseError>() {
+             @Override
+             public void onStateChanged(OADState newState) {
+             }
+
+             @Override
+             public void onProgressPercentChanged(final int progress) {
+             }
+
+             @Override
+             public void onError(BaseError error, String additionalInfo) {
+
+             }
+         }
+      );
+} 
 
 @Override 
 public void onDeviceDisconnected() {}
@@ -1391,6 +1465,73 @@ The SDK failed to bond the mobile device with the headset. It means that it fail
  The SDK failed to start EEG data stream.
 
 
+### OAD states
+
+Here is the list of all the possible OAD states that the `onStateChanged` callback provided by the `OADStateListener` Object can send. All the states from `INITIALIZING` to `COMPLETED` are listed  in the chronological order corresponding to the step followed in the update process.
+
+` INITIALIZING`
+
+ State triggered when the client requests an OAD firmware update. As the OAD binary file that holds the new firmware is too big to be sent in a single request, the file is chucked into small packets.
+
+------
+
+`INITIALIZED`
+
+State triggered when an OAD request is ready to be submitted for validation by the headset device that is out-of-date. 
+The SDK is then waiting for a return response that validate or invalidate the OAD request.
+
+------
+
+`READY_TO_TRANSFER`
+
+State triggered once the out-of-date headset device has validated the OAD request to start the OAD packets transfer.
+
+------
+
+
+`TRANSFERRING`
+
+State triggered once the OAD packets transfer is started.
+
+------
+
+
+`TRANSFERRED`
+
+State triggered once the transfer is complete (all the packets have been transferred by the SDK to the out-of-date headset device). The SDK is then waiting that the headset device returns a success or failure transfer state. For example, it might return a failure state if any corruption occurred while transferring the binary file.
+     
+------
+
+
+`AWAITING_DEVICE_REBOOT`
+
+State triggered when the SDK has received a success transfer response from the headset device and when it detects that the previously connected headset device is disconnected.
+
+------
+
+
+`READY_TO_RECONNECT`
+
+State triggered when the SDK has detected that the previously connected headset device is disconnected. The SDK needs to reset the mobile device Bluetooth (disable then enable) and clear the pairing keys of the updated headset device.
+     
+------
+
+`RECONNECTING`
+
+State triggered when the SDK is reconnecting the updated headset device.
+
+------
+
+`RECONNECTION_PERFORMED`
+State triggered when the headset device is reconnected. The SDK checks that update has succeeded by reading the current firmware version and compare it to the OAD file one.
+     
+------
+
+`COMPLETED`
+State triggered when an OAD update is completed (final state).
+     
+     
+
 
 ### Errors
 
@@ -1580,5 +1721,97 @@ ERROR_BLUETOOTH_DISABLED
 ```
 
 This operation could not be started : Bluetooth is disabled.
+
+
+
+------
+
+```
+ERROR_RECONNECT_FAILED
+
+```
+
+Incompatible firmware version : update is necessary.
+
+------
+
+```
+ERROR_TIMEOUT_UPDATE
+
+```
+
+Firmware update could not be completed within the permitted time.
+
+------
+
+```
+ERROR_INIT_FAILED
+
+```
+
+Preparing OAD Transfer request failed.
+
+------
+
+```
+ERROR_VALIDATION_FAILED
+
+```
+
+Firmware rejected the OAD update request.
+
+------
+
+```
+ERROR_WRONG_FIRMWARE_VERSION
+
+```
+
+Current firmware version does not match the update version
+
+------
+
+```
+ERROR_FIRMWARE_UPDATE_FAILED
+
+```
+
+Firmware update failed or could not be completed within the permitted time.
+
+------
+
+```
+ERROR_FIRMWARE_REJECTED_UPDATE
+
+```
+
+Firmware rejected the binary file that holds the firmware requested for an OAD update .
+
+------
+
+```
+ERROR_INVALID_FIRMWARE_VERSION
+
+```
+
+Firmware version requested is invalid.
+
+------
+
+```
+ERROR_TRANSFER_FAILED
+
+```
+
+OAD Transfer failed : corruption might occurred while transferring the binary file.
+
+------
+
+```
+ERROR_LOST_CONNECTION
+
+```
+
+Lost Headset connection during an OAD update.
 
 *Features only available on the Premium SDK version. Please send a message at contact@mybraintech.com to get more informations about the Premium SDK version.
