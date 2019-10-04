@@ -25,6 +25,7 @@ import java.util.Objects;
 import config.MbtConfig;
 import config.StreamConfig;
 import core.bluetooth.BtState;
+import core.bluetooth.p;
 import core.device.model.MbtDevice;
 import core.eeg.storage.MbtEEGPacket;
 import engine.MbtClient;
@@ -35,7 +36,6 @@ import engine.clientevents.BluetoothStateListener;
 import engine.clientevents.DeviceBatteryListener;
 import engine.clientevents.EegListener;
 import features.MbtDeviceType;
-import features.MbtFeatures;
 
 import static utils.MatrixUtils.invertFloatMatrix;
 
@@ -48,11 +48,9 @@ public class DeviceActivity extends AppCompatActivity {
     private static String TAG = DeviceActivity.class.getName();
 
     /**
-     * Maximum number of raw EEG data to display on the graph.
-     * As the sampling frequency is 250 Hz, 250 new points are added to the graph every second
      * The graph window displays 2 seconds of EEG streaming.
      */
-    private static final int MAX_NUMBER_OF_DATA_TO_DISPLAY = 500;
+    private static final int TIME_WINDOW = 2;
 
     /**
      * Instance of SDK client used to access all the SDK features
@@ -62,33 +60,12 @@ public class DeviceActivity extends AppCompatActivity {
     /**
      * TextView used to display the connected headset name and QR code
      */
-    private TextView connectedDeviceTextView;
+    private TextView deviceTextView;
 
     /**
      * Graph used to plot the EEG raw data in real time.
-     * The graph window displays 2 seconds of EEG streaming.
      */
     private LineChart eegGraph;
-
-    /**
-     * Object used to hold all the curves to plot on the graph
-     */
-    private LineData eegLineData;
-
-    /**
-     * Object used to bundle all the triggers data to plot on the graph
-     */
-    private LineDataSet status;
-
-    /**
-     * Object used to bundle all the raw EEG data of the first channel (P3) to plot on the graph
-     */
-    private LineDataSet channel1;
-
-    /**
-     * Object used to bundle all the raw EEG data of the second channel (P4) to plot on the graph
-     */
-    private LineDataSet channel2;
 
     /**
      * Button used start or stop the real time EEG streaming.
@@ -133,6 +110,11 @@ public class DeviceActivity extends AppCompatActivity {
     private EegListener<BaseError> eegListener;
 
     /**
+     * Instance of myBrain Technologies headset device connected in Bluetooth
+     */
+    private MbtDevice connectedDevice;
+
+    /**
      * Method called by default when the Activity is started
      * It initializes all the views, SDK client, and permissions.
      */
@@ -154,6 +136,18 @@ public class DeviceActivity extends AppCompatActivity {
         initStartStopStreamingButton();
         initEegGraph();
     }
+
+    /**
+     * Method used to initialize the top tool bar view
+     */
+    public void initToolBar(){
+        Objects.requireNonNull(getSupportActionBar()).setDisplayShowHomeEnabled(true);
+        getSupportActionBar().setIcon(R.drawable.logo);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            getSupportActionBar().setBackgroundDrawable(new ColorDrawable(getColor(R.color.light_blue)));
+        }
+    }
+
     /**
      * Method called to initialize the EEG raw data listener.
      * This listener provides a callback used to receive a notification when a new packet of EEG data is received
@@ -193,6 +187,11 @@ public class DeviceActivity extends AppCompatActivity {
                     }
                 }
             }
+
+            @Override
+            public void onNewStreamState(@NonNull p p) {
+
+            }
         };
     }
 
@@ -206,7 +205,7 @@ public class DeviceActivity extends AppCompatActivity {
              * Callback used to receive a notification when the Bluetooth connection state changes
              */
             @Override
-            public void onNewState(BtState newState) {
+            public void onNewState(BtState newState, MbtDevice device) {
 
             }
 
@@ -214,16 +213,18 @@ public class DeviceActivity extends AppCompatActivity {
              * Callback used to receive a notification when the Bluetooth connection is established
              */
             @Override
-            public void onDeviceConnected() {
+            public void onDeviceConnected(MbtDevice device) {
                 isConnected = true;
+                connectedDevice = device;
             }
 
             /**
              * Callback used to receive a notification when a connected headset is disconnected
              */
             @Override
-            public void onDeviceDisconnected() {
+            public void onDeviceDisconnected(MbtDevice device) {
                 isConnected = false;
+                connectedDevice = null;
                 returnOnPreviousActivity();
             }
 
@@ -237,34 +238,26 @@ public class DeviceActivity extends AppCompatActivity {
         };
     }
 
-    /**
-     * Method used to initialize the top tool bar view
-     */
-    public void initToolBar(){
-        Objects.requireNonNull(getSupportActionBar()).setDisplayShowHomeEnabled(true);
-        getSupportActionBar().setIcon(R.drawable.logo);
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            getSupportActionBar().setBackgroundDrawable(new ColorDrawable(getColor(R.color.light_blue)));
-        }
-    }
 
     /**
      * Method called to initialize the TextView used to display the connected headset name and QR code
      */
     private void initConnectedDeviceTextView() {
-        connectedDeviceTextView = findViewById(R.id.deviceNameTextView);
+        deviceTextView = findViewById(R.id.deviceNameTextView);
         sdkClient.requestCurrentConnectedDevice(new SimpleRequestCallback<MbtDevice>() {
 
             /**
              * Callback used to get the connected headset informations
-             * @param connectedDevice is the connected headset
+             * @param device is the connected headset
              */
             @Override
-            public void onRequestComplete(MbtDevice connectedDevice) {
+            public void onRequestComplete(MbtDevice device) {
+                connectedDevice = device;
+
                 if (connectedDevice != null){
                     String deviceName = connectedDevice.getSerialNumber();
                     String deviceQrCode = connectedDevice.getExternalName();
-                    connectedDeviceTextView.setText(deviceName + " | " + deviceQrCode);
+                    deviceTextView.setText(deviceName + " | " + deviceQrCode);
                 }
             }
         });
@@ -302,7 +295,7 @@ public class DeviceActivity extends AppCompatActivity {
                      * @param newLevel is the current battery charge level
                      */
                     @Override
-                    public void onBatteryChanged(String newLevel) {
+                    public void onBatteryLevelReceived(String newLevel) {
                         notifyUser("Current battery level : "+newLevel+" %");
                     }
 
@@ -330,9 +323,8 @@ public class DeviceActivity extends AppCompatActivity {
             public void onClick(View v) {
                 if(!isStreaming) {
                     startStream(new StreamConfig.Builder(eegListener)
-                            .setNotificationPeriod(MbtFeatures.DEFAULT_CLIENT_NOTIFICATION_PERIOD)
-
-                            .create());
+                            .useQualities()
+                            .createForDevice());
                 }else { //streaming is in progress : stopping streaming
                     stopStream(); // set false to isStreaming et null to the eegListener
                 }
@@ -374,11 +366,28 @@ public class DeviceActivity extends AppCompatActivity {
      */
     public void initEegGraph(){
         eegGraph = findViewById(R.id.eegGraph);
+        LineData eegLineData = new LineData();
 
-        status = new LineDataSet(new ArrayList<Entry>(MbtConfig.getEegPacketLength()), getString(R.string.status));
-        channel1 = new LineDataSet(new ArrayList<Entry>(250), getString(R.string.channel_1));
-        channel2 = new LineDataSet(new ArrayList<Entry>(250), getString(R.string.channel_2));
+        int[] colors = new int[]{
+                Color.rgb(3,32,123),
+                Color.rgb(99,186,233)
+        };
 
+        ArrayList<LineDataSet> channels = new ArrayList<>();
+        for (int channel = 0 ; channel < connectedDevice.getNbChannels(); channel++){
+            LineDataSet lineDataSet = new LineDataSet(new ArrayList<Entry>(connectedDevice.getSampRate()), getString(R.string.channel)+" "+ (channel+1));
+            channels.add(lineDataSet);//Object used to bundle all the raw EEG data of one channel to plot on the graph
+
+            lineDataSet.setDrawValues(false);
+            lineDataSet.disableDashedLine();
+            lineDataSet.setDrawCircleHole(false);
+            lineDataSet.setDrawCircles(false);
+            lineDataSet.setColor(colors[channel]);
+            lineDataSet.setAxisDependency(YAxis.AxisDependency.LEFT);
+            eegLineData.addDataSet(lineDataSet);
+        }
+
+        LineDataSet status = new LineDataSet(new ArrayList<Entry>(MbtConfig.getEegPacketLength()), getString(R.string.status));//Object used to bundle all the triggers data to plot on the graph
         status.setDrawValues(false);
         status.disableDashedLine();
         status.setDrawCircleHole(false);
@@ -388,25 +397,6 @@ public class DeviceActivity extends AppCompatActivity {
         status.setFillColor(Color.GREEN);
         status.setFillAlpha(40);
         status.setAxisDependency(YAxis.AxisDependency.RIGHT);
-
-        channel1.setDrawValues(false);
-        channel1.disableDashedLine();
-        channel1.setDrawCircleHole(false);
-        channel1.setDrawCircles(false);
-        channel1.setColor(Color.rgb(3,32,123));
-        channel1.setAxisDependency(YAxis.AxisDependency.LEFT);
-
-        channel2.setDrawValues(false);
-        channel2.disableDashedLine();
-        channel2.setDrawCircleHole(false);
-        channel2.setDrawCircles(false);
-        channel2.setColor(Color.rgb(99,186,233));
-        channel2.setAxisDependency(YAxis.AxisDependency.LEFT);
-
-        eegLineData = new LineData();
-
-        eegLineData.addDataSet(channel1);
-        eegLineData.addDataSet(channel2);
         eegLineData.addDataSet(status);
 
         eegGraph.setData(eegLineData);
@@ -442,13 +432,13 @@ public class DeviceActivity extends AppCompatActivity {
         LineData data = eegGraph.getData();
         if (data != null) {
 
-            if(channelData.size()< MbtFeatures.getNbChannels(MbtDeviceType.MELOMIND)){
+            if(channelData.size()< connectedDevice.getNbChannels()){
                 throw new IllegalStateException("Incorrect matrix size, one or more channel are missing");
             }else{
                 if(channelsHasTheSameNumberOfData(channelData)){
                     for(int currentEegData = 0; currentEegData< channelData.get(0).size(); currentEegData++){ //for each number of eeg data
                         //plot the EEG signal
-                        for (int currentChannel = 0; currentChannel < MbtFeatures.getNbChannels(MbtDeviceType.MELOMIND) ; currentChannel++){
+                        for (int currentChannel = 0; currentChannel < connectedDevice.getNbChannels() ; currentChannel++){
                             data.addEntry(new Entry(data.getDataSets().get(currentChannel).getEntryCount(), channelData.get(currentChannel).get(currentEegData) *1000000),currentChannel);
                         }
                         if(statusData != null) //plot the triggers
@@ -462,7 +452,7 @@ public class DeviceActivity extends AppCompatActivity {
             }
             data.notifyDataChanged();
             eegGraph.notifyDataSetChanged();// let the chart know it's data has changed
-            eegGraph.setVisibleXRangeMaximum(MAX_NUMBER_OF_DATA_TO_DISPLAY);// limit the number of visible entries : The graph window displays 2 seconds of EEG streaming.
+            eegGraph.setVisibleXRangeMaximum(TIME_WINDOW * connectedDevice.getSampRate());// limits the number of visible entries. The graph window displays 2 seconds of EEG data. As the sampling frequency is 250 Hz, 250 new points are added to the graph every second
             eegGraph.moveViewToX((data.getEntryCount()/2));// move to the latest entry : previous entries are saved so that you can scroll on the left to visualize the previous seconds of acquisition.
 
         }else{
@@ -479,7 +469,7 @@ public class DeviceActivity extends AppCompatActivity {
         boolean hasTheSameNumberOfData = true;
 
         int size = channelData.get(1).size();
-        for (int i = 0 ; i < MbtFeatures.getNbChannels(MbtDeviceType.MELOMIND) ; i++){
+        for (int i = 0 ; i < connectedDevice.getNbChannels() ; i++){
             if(channelData.get(i).size() != size){
                 hasTheSameNumberOfData = false;
             }
