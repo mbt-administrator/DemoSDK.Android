@@ -78,31 +78,17 @@
     </LinearLayout>
 
     <TextView
-        android:id="@+id/channel_1_quality"
+        android:id="@+id/qualities"
         android:layout_width="wrap_content"
         android:layout_height="0dp"
-        android:text="@string/channel_1"
-        android:textColor="@color/white"
         android:gravity="center_vertical"
+        android:textColor="@color/white"
         android:textSize="18sp"
         android:visibility="visible"
 
         app:layout_constraintBottom_toBottomOf="@+id/guidelineBottomQuality"
-        app:layout_constraintEnd_toStartOf="@+id/guidelineEndScanButton"
-        app:layout_constraintTop_toTopOf="@id/guidelineTopQuality" />
-
-    <TextView
-        android:id="@+id/channel_2_quality"
-        android:layout_width="wrap_content"
-        android:layout_height="0dp"
-        android:text="@string/channel_2"
-        android:textColor="@color/white"
-        android:textSize="18sp"
-        android:gravity="center_vertical"
-        android:visibility="visible"
-
-        app:layout_constraintBottom_toBottomOf="@+id/guidelineBottomQuality"
-        app:layout_constraintStart_toStartOf="@+id/guidelineStartCancelButton"
+        app:layout_constraintEnd_toStartOf="@+id/guidelineEnd"
+        app:layout_constraintStart_toStartOf="@+id/guidelineStart"
         app:layout_constraintTop_toTopOf="@id/guidelineTopQuality" />
 
     <com.github.mikephil.charting.charts.LineChart

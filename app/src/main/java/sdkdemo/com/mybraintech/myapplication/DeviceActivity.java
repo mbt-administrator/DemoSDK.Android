@@ -27,6 +27,7 @@ import config.StreamConfig;
 import core.bluetooth.BtState;
 import core.bluetooth.p;
 import core.device.model.MbtDevice;
+import core.device.model.MelomindDevice;
 import core.eeg.storage.MbtEEGPacket;
 import engine.MbtClient;
 
@@ -66,6 +67,11 @@ public class DeviceActivity extends AppCompatActivity {
      * Graph used to plot the EEG raw data in real time.
      */
     private LineChart eegGraph;
+
+    /**
+     * Text view used to display the qualities of the channels in real time
+     */
+    private TextView channelQualities;
 
     /**
      * Button used start or stop the real time EEG streaming.
@@ -114,6 +120,7 @@ public class DeviceActivity extends AppCompatActivity {
      */
     private MbtDevice connectedDevice;
 
+
     /**
      * Method called by default when the Activity is started
      * It initializes all the views, SDK client, and permissions.
@@ -122,18 +129,19 @@ public class DeviceActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_device);
+        sdkClient = MbtClient.getClientInstance();
 
         initConnectionStateListener();
         initEegListener();
 
-        sdkClient = MbtClient.getClientInstance();
         sdkClient.setConnectionStateListener(bluetoothStateListener);
 
+        //initialize the view elements
         initToolBar();
-        initConnectedDeviceTextView();
+        initDeviceTextView();
         initDisconnectButton();
         initReadBatteryButton();
-        initStartStopStreamingButton();
+        initStreamingButton();
         initEegGraph();
     }
 
@@ -158,11 +166,11 @@ public class DeviceActivity extends AppCompatActivity {
              * Callback used to receive a notification if the EEG streaming is aborted because the SDK returned an error
              */
             @Override
-            public void onError(BaseError error, String additionnalInfo) {
-                Toast.makeText(DeviceActivity.this, error.getMessage()+ (additionnalInfo != null ? additionnalInfo : ""), Toast.LENGTH_SHORT).show();
+            public void onError(BaseError error, String additionalInfo) {
+                Toast.makeText(DeviceActivity.this, error.getMessage()+ (additionalInfo != null ? additionalInfo : ""), Toast.LENGTH_SHORT).show();
                 if(isStreaming) {
                     stopStream();
-                    updateStreaming();
+                    updateView();
                 }
             }
 
@@ -182,8 +190,10 @@ public class DeviceActivity extends AppCompatActivity {
                     mbtEEGPackets.setChannelsData(invertFloatMatrix(mbtEEGPackets.getChannelsData()));
 
                 if(isStreaming){
-                    if(eegGraph!=null){
+                    if(eegGraph != null){
                         addDataToGraph(mbtEEGPackets.getChannelsData(), mbtEEGPackets.getStatusData());
+
+                        updateQualities(mbtEEGPackets.getQualities());
                     }
                 }
             }
@@ -225,6 +235,8 @@ public class DeviceActivity extends AppCompatActivity {
             public void onDeviceDisconnected(MbtDevice device) {
                 isConnected = false;
                 connectedDevice = null;
+                sdkClient.setConnectionStateListener(null);
+                sdkClient.setEEGListener(null);
                 returnOnPreviousActivity();
             }
 
@@ -232,8 +244,8 @@ public class DeviceActivity extends AppCompatActivity {
              * Callback used to receive a notification if the Bluetooth connection is aborted because the SDK returned an error
              */
             @Override
-            public void onError(BaseError error, String additionnalInfo) {
-                notifyUser(error.getMessage()+(additionnalInfo != null ? additionnalInfo : ""));
+            public void onError(BaseError error, String additionalInfo) {
+                notifyUser(error.getMessage()+(additionalInfo != null ? additionalInfo : ""));
             }
         };
     }
@@ -242,7 +254,7 @@ public class DeviceActivity extends AppCompatActivity {
     /**
      * Method called to initialize the TextView used to display the connected headset name and QR code
      */
-    private void initConnectedDeviceTextView() {
+    private void initDeviceTextView() {
         deviceTextView = findViewById(R.id.deviceNameTextView);
         sdkClient.requestCurrentConnectedDevice(new SimpleRequestCallback<MbtDevice>() {
 
@@ -303,7 +315,7 @@ public class DeviceActivity extends AppCompatActivity {
                      * Callback used to receive a notification if the battery reading operation is aborted because the SDK returned an error
                      */
                     @Override
-                    public void onError(BaseError error, String additionnalInfo) {
+                    public void onError(BaseError error, String additionalInfo) {
                         notifyUser(getString(R.string.error_read_battery));
                     }
                 });
@@ -316,7 +328,7 @@ public class DeviceActivity extends AppCompatActivity {
      * A streaming is started if you click on this button whereas no streaming was in progress.
      * The current streaming is stopped if you click on this button whereas a streaming was in progress.
      */
-    private void initStartStopStreamingButton(){
+    private void initStreamingButton(){
         startStopStreamingButton = findViewById(R.id.startStopStreamingButton);
         startStopStreamingButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -324,11 +336,12 @@ public class DeviceActivity extends AppCompatActivity {
                 if(!isStreaming) {
                     startStream(new StreamConfig.Builder(eegListener)
                             .useQualities()
-                            .createForDevice());
+                            .createForDevice(connectedDevice instanceof MelomindDevice ?
+                                    MbtDeviceType.MELOMIND : MbtDeviceType.VPRO));
                 }else { //streaming is in progress : stopping streaming
                     stopStream(); // set false to isStreaming et null to the eegListener
                 }
-                updateStreaming(); //update the UI text in both case according to the new value of isStreaming
+                updateView(); //update the UI text in both case according to the new value of isStreaming
             }
         });
     }
@@ -357,8 +370,9 @@ public class DeviceActivity extends AppCompatActivity {
      * The stream button text is changed into "Stop Streaming" if streaming is started
      * or into "Start Streaming" if streaming is stopped
      */
-    private void updateStreaming(){
-        startStopStreamingButton.setText((isStreaming ? R.string.stop_streaming : R.string.start_streaming));
+    private void updateView(){
+        startStopStreamingButton.setText((isStreaming ?
+                R.string.stop_streaming : R.string.start_streaming));
     }
 
     /**
@@ -368,26 +382,29 @@ public class DeviceActivity extends AppCompatActivity {
         eegGraph = findViewById(R.id.eegGraph);
         LineData eegLineData = new LineData();
 
-        int[] colors = new int[]{
+        int[] colors = new int[]{ //each channel is displayed as a colored curve
                 Color.rgb(3,32,123),
-                Color.rgb(99,186,233)
+                Color.rgb(99,186,233),
+                Color.rgb(23,52,143),
+                Color.rgb(119,206,233),
+                Color.rgb(43,72,163),
+                Color.rgb(139,226,233),
+                Color.rgb(63,92,183),
+                Color.rgb(159,233,233)
         };
 
-        ArrayList<LineDataSet> channels = new ArrayList<>();
         for (int channel = 0 ; channel < connectedDevice.getNbChannels(); channel++){
             LineDataSet lineDataSet = new LineDataSet(new ArrayList<Entry>(connectedDevice.getSampRate()), getString(R.string.channel)+" "+ (channel+1));
-            channels.add(lineDataSet);//Object used to bundle all the raw EEG data of one channel to plot on the graph
-
             lineDataSet.setDrawValues(false);
             lineDataSet.disableDashedLine();
             lineDataSet.setDrawCircleHole(false);
             lineDataSet.setDrawCircles(false);
             lineDataSet.setColor(colors[channel]);
             lineDataSet.setAxisDependency(YAxis.AxisDependency.LEFT);
-            eegLineData.addDataSet(lineDataSet);
+            eegLineData.addDataSet(lineDataSet); //add all the lines on the graph for EEG
         }
 
-        LineDataSet status = new LineDataSet(new ArrayList<Entry>(MbtConfig.getEegPacketLength()), getString(R.string.status));//Object used to bundle all the triggers data to plot on the graph
+        LineDataSet status = new LineDataSet(new ArrayList<Entry>(connectedDevice.getEegPacketLength()), getString(R.string.status));//Object used to bundle all the triggers data to plot on the graph
         status.setDrawValues(false);
         status.disableDashedLine();
         status.setDrawCircleHole(false);
@@ -397,7 +414,7 @@ public class DeviceActivity extends AppCompatActivity {
         status.setFillColor(Color.GREEN);
         status.setFillAlpha(40);
         status.setAxisDependency(YAxis.AxisDependency.RIGHT);
-        eegLineData.addDataSet(status);
+        eegLineData.addDataSet(status); //add a line on the graph for the status
 
         eegGraph.setData(eegLineData);
 
@@ -420,6 +437,22 @@ public class DeviceActivity extends AppCompatActivity {
         eegGraph.getXAxis().setDrawGridLines(false);
 
         eegGraph.invalidate();
+
+        channelQualities = findViewById(R.id.qualities);
+    }
+
+    private void updateQualities(ArrayList<Float> qualitiesList) {
+        StringBuilder qualities = new StringBuilder();
+        for (int qualityTextView = 0 ; qualityTextView < connectedDevice.getNbChannels() ; qualityTextView++){
+            qualities.append(getString(R.string.quality))
+                    .append(qualityTextView+1)
+                    .append( ": ")
+                    .append( qualitiesList != null ?
+                            qualitiesList.get(qualityTextView)
+                            : "--")
+                    .append(" ");
+        }
+        channelQualities.setText(qualities.toString());
     }
 
     /**
@@ -441,15 +474,14 @@ public class DeviceActivity extends AppCompatActivity {
                         for (int currentChannel = 0; currentChannel < connectedDevice.getNbChannels() ; currentChannel++){
                             data.addEntry(new Entry(data.getDataSets().get(currentChannel).getEntryCount(), channelData.get(currentChannel).get(currentEegData) *1000000),currentChannel);
                         }
+
                         if(statusData != null) //plot the triggers
                         data.addEntry(new Entry(data.getDataSets().get(data.getDataSetCount()-1).getEntryCount(), statusData.get(currentEegData).isNaN() ? Float.NaN : statusData.get(currentEegData)), data.getDataSetCount()-1);
-
                     }
-                }else{
+                }else
                     throw new IllegalStateException("Channels do not have the same amount of data");
-                }
-
             }
+
             data.notifyDataChanged();
             eegGraph.notifyDataSetChanged();// let the chart know it's data has changed
             eegGraph.setVisibleXRangeMaximum(TIME_WINDOW * connectedDevice.getSampRate());// limits the number of visible entries. The graph window displays 2 seconds of EEG data. As the sampling frequency is 250 Hz, 250 new points are added to the graph every second
@@ -468,8 +500,8 @@ public class DeviceActivity extends AppCompatActivity {
     private boolean channelsHasTheSameNumberOfData(ArrayList<ArrayList<Float>> channelData){
         boolean hasTheSameNumberOfData = true;
 
-        int size = channelData.get(1).size();
-        for (int i = 0 ; i < connectedDevice.getNbChannels() ; i++){
+        int size = channelData.get(0).size();
+        for (int i = 1 ; i < connectedDevice.getNbChannels() ; i++){
             if(channelData.get(i).size() != size){
                 hasTheSameNumberOfData = false;
             }

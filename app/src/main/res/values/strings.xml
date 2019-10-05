@@ -4,8 +4,7 @@
     <string name="connect">Connect</string>
     <string name="disconnect">Disconnect</string>
     <string name="start">Start</string>
-    <string name="scan">Find a device</string>
-    <string name="scanAll">Find all devices</string>
+    <string name="find_device">Find a device</string>
     <string name="cancel">Cancel</string>
 
     <string name="device_name">Enter a device name</string>
@@ -40,5 +39,6 @@
     <string name="channel_1">Channel 1 : P3</string>
     <string name="channel_2">Channel 2 : P4</string>
     <string name="status">Triggers</string>
+    <string name="quality">Q</string>
 
 </resources>
