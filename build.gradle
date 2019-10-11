@@ -20,7 +20,7 @@ allprojects {
         jcenter()
         maven { url 'https://jitpack.io' }
         maven{
-            url 'https://package.mybraintech.com/repository/maven-public/'
+            url 'https://package.mybraintech.com/repository/maven-snapshots/'
             credentials {
                 username 'sdk'
                 password 'MBTSDK2019'
