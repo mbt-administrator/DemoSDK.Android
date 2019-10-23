@@ -412,9 +412,9 @@ You can specify some parameters :
 
 - `port(int port)` * : the SDK streams the data to the specified port. Default value is 8000 if you don't specify any value.
 - `ipAddress(String ipAddress)` * : the SDK streams the data to the specified computer identified by its IP address. If you don't know your computer IP address, you can open a command line window and type "ipconfig".
-- `streamRawEeg()` * : the SDK streams the EEG raw data over OSC.
-- `streamQualities()` * : the SDK streams the EEG qualities over OSC.
-- `streamFeature(Feature feature)` * : the SDK streams a single Frequency band feature over OSC.
+- `streamRawEeg()` * : the SDK streams the EEG raw data over OSC. Your OSC receiver has to listen the following address to get the raw EEG : /raweeg. 
+- `streamQualities()` * : the SDK streams the EEG qualities over OSC. Your OSC receiver has to listen the following address to get the qualities : /quality. 
+- `streamFeature(Feature feature)` * : the SDK streams a single Frequency band feature over OSC. Your OSC receiver has to listen the following address to get the feature : /feature/frequencyBand/featureType. You must replace frequencyBand with the name of the frequency band you're interested in and featureName with the type of feature you're interested in. For example to get the alpha power, the address will be : /feature/alpha/power. 
 - `streamFeatures(Features… features)` * : the SDK streams several Frequency band features over OSC. Each feature to stream can be separated with a comma, or an array of Feature object can also be passed.
 
 
