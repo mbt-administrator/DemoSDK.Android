@@ -84,6 +84,7 @@
         android:gravity="center_vertical"
         android:textColor="@color/white"
         android:textSize="18sp"
+        android:text="@string/click_start_stream"
         android:visibility="visible"
 
         app:layout_constraintBottom_toBottomOf="@+id/guidelineBottomQuality"

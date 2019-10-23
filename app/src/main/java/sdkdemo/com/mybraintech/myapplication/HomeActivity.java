@@ -29,6 +29,7 @@ import core.device.model.MbtDevice;
 import core.device.model.MelomindDevice;
 import core.device.model.VProDevice;
 import engine.MbtClient;
+import engine.SimpleRequestCallback;
 import engine.clientevents.BaseError;
 
 import engine.clientevents.BluetoothStateListener;
@@ -146,10 +147,16 @@ public class HomeActivity extends AppCompatActivity{
          * If a device is connecting (or is connected), its data are bundled in the {@link MbtDevice} device object.
          */
         @Override
-        public void onNewState(BtState newState, MbtDevice device) {
+        public void onNewState(BtState newState) {
             if(newState.equals(BtState.READING_SUCCESS)){
-                showDeviceName(device);
-                showDeviceQrCode(device);
+                sdkClient.requestCurrentConnectedDevice(new SimpleRequestCallback<MbtDevice>() {
+                    @Override
+                    public void onRequestComplete(MbtDevice device) {
+                        showDeviceName(device);
+                        showDeviceQrCode(device);
+                    }
+                });
+
             }
         }
 
@@ -169,7 +176,7 @@ public class HomeActivity extends AppCompatActivity{
          * The connected device data are bundled in the {@link MbtDevice} device object.
          */
         @Override
-        public void onDeviceConnected(MbtDevice device) {
+        public void onDeviceConnected() {
             toast.cancel();
             closeCurrentActivity();
         }
@@ -179,7 +186,7 @@ public class HomeActivity extends AppCompatActivity{
          * The disconnected device data are bundled in the {@link MbtDevice} device object.
          */
         @Override
-        public void onDeviceDisconnected(MbtDevice device) {
+        public void onDeviceDisconnected() {
             if(!toast.getView().isShown())
                 notifyUser(getString(R.string.no_connected_headset));
             if(isCancel)
@@ -396,6 +403,10 @@ public class HomeActivity extends AppCompatActivity{
     private void startConnection() {
         hasError = false;
 
+        MbtDeviceType deviceType = MbtDeviceType.MELOMIND;
+        if(deviceName != null && deviceName.startsWith(MbtFeatures.VPRO_DEVICE_NAME_PREFIX))
+            deviceType = MbtDeviceType.VPRO;
+
         ConnectionConfig.Builder builder = new ConnectionConfig.Builder(bluetoothStateListener)
                 .deviceName(
                         ((deviceName != null) && (deviceName.equals(MELOMIND_DEVICE_NAME_PREFIX) || deviceName.equals(VPRO_DEVICE_NAME_PREFIX))) ? //if no name has been entered by the user, the default device name is the headset prefix
@@ -403,16 +414,13 @@ public class HomeActivity extends AppCompatActivity{
                 .deviceQrCode(
                         ((deviceQrCode != null) && (deviceQrCode.equals(QR_CODE_NAME_PREFIX)) ) ? //if no QR code has been entered by the user, the default device name is the headset prefix
                         null : deviceQrCode )
-                .maxScanDuration(MAXIMUM_SCAN_DURATION);
+                .maxScanDuration(MAXIMUM_SCAN_DURATION)
+                .scanDeviceType(deviceType);
 
         if(connectAudio)
             builder.connectAudioIfDeviceCompatible();
 
-        MbtDeviceType deviceType = MbtDeviceType.MELOMIND;
-        if(deviceName != null && deviceName.startsWith(MbtFeatures.VPRO_DEVICE_NAME_PREFIX))
-            deviceType = MbtDeviceType.VPRO;
-
-        sdkClient.connectBluetooth(builder.createForDevice(deviceType));
+        sdkClient.connectBluetooth(builder.create());
     }
 
     /**
@@ -452,15 +460,6 @@ public class HomeActivity extends AppCompatActivity{
     private void showToast(String message){
         toast.setText(message);
         toast.show();
-    }
-
-    /**
-     * Method called by default when the Android device back button is clicked :
-     * the listener is set to null to avoid memory leaks
-     */
-    @Override
-    public void onBackPressed() {
-        bluetoothStateListener = null;
     }
 
     /**

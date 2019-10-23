@@ -22,12 +22,9 @@ import com.github.mikephil.charting.data.LineDataSet;
 import java.util.ArrayList;
 import java.util.Objects;
 
-import config.MbtConfig;
 import config.StreamConfig;
 import core.bluetooth.BtState;
-import core.bluetooth.p;
 import core.device.model.MbtDevice;
-import core.device.model.MelomindDevice;
 import core.eeg.storage.MbtEEGPacket;
 import engine.MbtClient;
 
@@ -36,7 +33,6 @@ import engine.clientevents.BaseError;
 import engine.clientevents.BluetoothStateListener;
 import engine.clientevents.DeviceBatteryListener;
 import engine.clientevents.EegListener;
-import features.MbtDeviceType;
 
 import static utils.MatrixUtils.invertFloatMatrix;
 
@@ -46,6 +42,9 @@ import static utils.MatrixUtils.invertFloatMatrix;
  */
 public class DeviceActivity extends AppCompatActivity {
 
+    /**
+     * TAG used for logging messages in the console
+     */
     private static String TAG = DeviceActivity.class.getName();
 
     /**
@@ -128,15 +127,15 @@ public class DeviceActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_device);
-        sdkClient = MbtClient.getClientInstance();
+        setContentView(R.layout.activity_device); // associate the XML view
+        sdkClient = MbtClient.getClientInstance();//initialize the SDK
 
+        //initialize the listeners
         initConnectionStateListener();
         initEegListener();
-
         sdkClient.setConnectionStateListener(bluetoothStateListener);
 
-        //initialize the view elements
+        //initialize the graphic elements
         initToolBar();
         initDeviceTextView();
         initDisconnectButton();
@@ -167,10 +166,11 @@ public class DeviceActivity extends AppCompatActivity {
              */
             @Override
             public void onError(BaseError error, String additionalInfo) {
-                Toast.makeText(DeviceActivity.this, error.getMessage()+ (additionalInfo != null ? additionalInfo : ""), Toast.LENGTH_SHORT).show();
+                String errorMessage = error.getMessage()+ (additionalInfo != null ? additionalInfo : "");
+                Toast.makeText(DeviceActivity.this, errorMessage, Toast.LENGTH_SHORT).show();
                 if(isStreaming) {
-                    stopStream();
-                    updateView();
+                    stopStream(); //streaming is stopped if an error occurred
+                    updateStreamButton();
                 }
             }
 
@@ -186,22 +186,17 @@ public class DeviceActivity extends AppCompatActivity {
              */
             @Override
             public void onNewPackets(@NonNull final MbtEEGPacket mbtEEGPackets) {
-                if(invertFloatMatrix(mbtEEGPackets.getChannelsData()) != null)
+                if(invertFloatMatrix(mbtEEGPackets.getChannelsData()) != null) //EEG data matrix is inverted to facilitate the display in a graph
                     mbtEEGPackets.setChannelsData(invertFloatMatrix(mbtEEGPackets.getChannelsData()));
 
                 if(isStreaming){
                     if(eegGraph != null){
                         addDataToGraph(mbtEEGPackets.getChannelsData(), mbtEEGPackets.getStatusData());
-
-                        updateQualities(mbtEEGPackets.getQualities());
+                        updateQualitiesView(mbtEEGPackets.getQualities());
                     }
                 }
             }
 
-            @Override
-            public void onNewStreamState(@NonNull p p) {
-
-            }
         };
     }
 
@@ -215,7 +210,7 @@ public class DeviceActivity extends AppCompatActivity {
              * Callback used to receive a notification when the Bluetooth connection state changes
              */
             @Override
-            public void onNewState(BtState newState, MbtDevice device) {
+            public void onNewState(BtState newState) {
 
             }
 
@@ -223,20 +218,23 @@ public class DeviceActivity extends AppCompatActivity {
              * Callback used to receive a notification when the Bluetooth connection is established
              */
             @Override
-            public void onDeviceConnected(MbtDevice device) {
+            public void onDeviceConnected() {
                 isConnected = true;
-                connectedDevice = device;
+                sdkClient.requestCurrentConnectedDevice(new SimpleRequestCallback<MbtDevice>() {
+                    @Override
+                    public void onRequestComplete(MbtDevice device) {
+                        connectedDevice = device;
+                    }
+                });
             }
 
             /**
              * Callback used to receive a notification when a connected headset is disconnected
              */
             @Override
-            public void onDeviceDisconnected(MbtDevice device) {
+            public void onDeviceDisconnected() {
                 isConnected = false;
                 connectedDevice = null;
-                sdkClient.setConnectionStateListener(null);
-                sdkClient.setEEGListener(null);
                 returnOnPreviousActivity();
             }
 
@@ -307,7 +305,7 @@ public class DeviceActivity extends AppCompatActivity {
                      * @param newLevel is the current battery charge level
                      */
                     @Override
-                    public void onBatteryLevelReceived(String newLevel) {
+                    public void onBatteryChanged(String newLevel) {
                         notifyUser("Current battery level : "+newLevel+" %");
                     }
 
@@ -336,12 +334,11 @@ public class DeviceActivity extends AppCompatActivity {
                 if(!isStreaming) {
                     startStream(new StreamConfig.Builder(eegListener)
                             .useQualities()
-                            .createForDevice(connectedDevice instanceof MelomindDevice ?
-                                    MbtDeviceType.MELOMIND : MbtDeviceType.VPRO));
-                }else { //streaming is in progress : stopping streaming
+                            .create());
+                }else  //streaming is in progress : stopping streaming
                     stopStream(); // set false to isStreaming et null to the eegListener
-                }
-                updateView(); //update the UI text in both case according to the new value of isStreaming
+
+                updateStreamButton(); //update the UI text in both case according to the new value of isStreaming
             }
         });
     }
@@ -370,7 +367,7 @@ public class DeviceActivity extends AppCompatActivity {
      * The stream button text is changed into "Stop Streaming" if streaming is started
      * or into "Start Streaming" if streaming is stopped
      */
-    private void updateView(){
+    private void updateStreamButton(){
         startStopStreamingButton.setText((isStreaming ?
                 R.string.stop_streaming : R.string.start_streaming));
     }
@@ -393,7 +390,7 @@ public class DeviceActivity extends AppCompatActivity {
                 Color.rgb(159,233,233)
         };
 
-        for (int channel = 0 ; channel < connectedDevice.getNbChannels(); channel++){
+        for (int channel = 0 ; channel < connectedDevice.getNbChannels(); channel++){ //each channel line is initialized
             LineDataSet lineDataSet = new LineDataSet(new ArrayList<Entry>(connectedDevice.getSampRate()), getString(R.string.channel)+" "+ (channel+1));
             lineDataSet.setDrawValues(false);
             lineDataSet.disableDashedLine();
@@ -404,7 +401,7 @@ public class DeviceActivity extends AppCompatActivity {
             eegLineData.addDataSet(lineDataSet); //add all the lines on the graph for EEG
         }
 
-        LineDataSet status = new LineDataSet(new ArrayList<Entry>(connectedDevice.getEegPacketLength()), getString(R.string.status));//Object used to bundle all the triggers data to plot on the graph
+        LineDataSet status = new LineDataSet(new ArrayList<Entry>(connectedDevice.getSampRate()), getString(R.string.status));//Object used to bundle all the triggers data to plot on the graph
         status.setDrawValues(false);
         status.disableDashedLine();
         status.setDrawCircleHole(false);
@@ -441,16 +438,27 @@ public class DeviceActivity extends AppCompatActivity {
         channelQualities = findViewById(R.id.qualities);
     }
 
-    private void updateQualities(ArrayList<Float> qualitiesList) {
+    /**
+     * Method called to update the label that display the values of the EEG signal quality of each channel
+     * @param qualitiesList the qualities of all channels
+     */
+    private void updateQualitiesView(ArrayList<Float> qualitiesList) {
         StringBuilder qualities = new StringBuilder();
         for (int qualityTextView = 0 ; qualityTextView < connectedDevice.getNbChannels() ; qualityTextView++){
+            if(qualityTextView != 0)//the channel qualities are separated by a vertical line
+                qualities.append("   ");
+
             qualities.append(getString(R.string.quality))
+                    .append( "(")
                     .append(qualityTextView+1)
-                    .append( ": ")
+                    .append( ") : ")
                     .append( qualitiesList != null ?
                             qualitiesList.get(qualityTextView)
                             : "--")
-                    .append(" ");
+                    .append("   ");
+
+            if(qualityTextView != connectedDevice.getNbChannels()-1)//the channel qualities are separated by a vertical line
+                qualities.append(" | ");
         }
         channelQualities.setText(qualities.toString());
     }
@@ -476,7 +484,10 @@ public class DeviceActivity extends AppCompatActivity {
                         }
 
                         if(statusData != null) //plot the triggers
-                        data.addEntry(new Entry(data.getDataSets().get(data.getDataSetCount()-1).getEntryCount(), statusData.get(currentEegData).isNaN() ? Float.NaN : statusData.get(currentEegData)), data.getDataSetCount()-1);
+                            data.addEntry(new Entry(data.getDataSets().get(data.getDataSetCount()-1).getEntryCount(),
+                                    statusData.get(currentEegData).isNaN() ? //received NaN are EEG packets that have been lost during Bluetooth transfer from the headset to the mobile
+                                            Float.NaN : statusData.get(currentEegData)),
+                                    data.getDataSetCount()-1);
                     }
                 }else
                     throw new IllegalStateException("Channels do not have the same amount of data");
@@ -485,7 +496,7 @@ public class DeviceActivity extends AppCompatActivity {
             data.notifyDataChanged();
             eegGraph.notifyDataSetChanged();// let the chart know it's data has changed
             eegGraph.setVisibleXRangeMaximum(TIME_WINDOW * connectedDevice.getSampRate());// limits the number of visible entries. The graph window displays 2 seconds of EEG data. As the sampling frequency is 250 Hz, 250 new points are added to the graph every second
-            eegGraph.moveViewToX((data.getEntryCount()/2));// move to the latest entry : previous entries are saved so that you can scroll on the left to visualize the previous seconds of acquisition.
+            eegGraph.moveViewToX(((float)data.getEntryCount() / 2 ));// move to the latest entry : previous entries are saved so that you can scroll on the left to visualize the previous seconds of acquisition.
 
         }else{
             throw new IllegalStateException("Graph not correctly initialized");
@@ -523,11 +534,7 @@ public class DeviceActivity extends AppCompatActivity {
      */
     @Override
     public void onBackPressed() {
-        sdkClient.disconnectBluetooth();
-        eegListener = null;
-        bluetoothStateListener = null;
-        sdkClient.setConnectionStateListener(null);
-        sdkClient.setEEGListener(null);
+        disconnectButton.performClick();
         returnOnPreviousActivity();
     }
 
@@ -536,11 +543,15 @@ public class DeviceActivity extends AppCompatActivity {
      */
     private void returnOnPreviousActivity(){
         notifyUser(getString(R.string.disconnected_headset));
+        //as the application goes back to the previous activity, we avoid memory leaks by setting the SDK listeners defined in this activity to null
+        sdkClient.setConnectionStateListener(null);
+        sdkClient.setEEGListener(null);
         eegListener = null;
         bluetoothStateListener = null;
+
         finish();
         Intent intent = new Intent(DeviceActivity.this, HomeActivity.class);
-        intent.putExtra(HomeActivity.PREVIOUS_ACTIVITY_EXTRA, DeviceActivity.TAG);
+        intent.putExtra(HomeActivity.PREVIOUS_ACTIVITY_EXTRA, DeviceActivity.TAG); //the HomeActivity will check if it has been started from the Device Activity
         startActivity(intent);
     }
 }

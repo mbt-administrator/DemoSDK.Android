@@ -40,5 +40,6 @@
     <string name="channel_2">Channel 2 : P4</string>
     <string name="status">Triggers</string>
     <string name="quality">Q</string>
+    <string name="click_start_stream">Click on START STREAMING</string>
 
 </resources>
