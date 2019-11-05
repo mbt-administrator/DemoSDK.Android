@@ -2,7 +2,6 @@ apply plugin: 'com.android.application'
 
 android {
     compileSdkVersion 28
-    flavorDimensions "default"
     defaultConfig {
         applicationId "sdkdemo.com.mybraintech.myapplication"
         minSdkVersion 22
@@ -16,28 +15,7 @@ android {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
-        debug{
-
-        }
-        staging{
-
-        }
-        unitTests{
-
-        }
     }
-//    productFlavors {
-//        full {
-//            dimension = 'default'
-//            versionNameSuffix "-Full"
-//
-//        }
-//
-//        lite {
-//            dimension = 'default'
-//            versionNameSuffix "-Lite"
-//        }
-//    }
 }
 
 dependencies {
@@ -47,8 +25,6 @@ dependencies {
     implementation 'com.github.PhilJay:MPAndroidChart:v3.0.1'
     implementation 'mybraintech.com:sdk-full:2.1.1'
     implementation 'mybraintech.com:sdk-full:2.1.1:javadoc'
-    implementation 'com.github.mbt-administrator:SDKv2.Android:test-jitpack-SNAPSHOT'
-
     testImplementation 'junit:junit:4.12'
     androidTestImplementation 'com.android.support.test:runner:1.0.2'
     androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.2'
