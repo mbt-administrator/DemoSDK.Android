@@ -403,10 +403,6 @@ public class HomeActivity extends AppCompatActivity{
     private void startConnection() {
         hasError = false;
 
-        MbtDeviceType deviceType = MbtDeviceType.MELOMIND;
-        if(deviceName != null && deviceName.startsWith(MbtFeatures.VPRO_DEVICE_NAME_PREFIX))
-            deviceType = MbtDeviceType.VPRO;
-
         ConnectionConfig.Builder builder = new ConnectionConfig.Builder(bluetoothStateListener)
                 .deviceName(
                         ((deviceName != null) && (deviceName.equals(MELOMIND_DEVICE_NAME_PREFIX) || deviceName.equals(VPRO_DEVICE_NAME_PREFIX))) ? //if no name has been entered by the user, the default device name is the headset prefix
@@ -414,11 +410,10 @@ public class HomeActivity extends AppCompatActivity{
                 .deviceQrCode(
                         ((deviceQrCode != null) && (deviceQrCode.equals(QR_CODE_NAME_PREFIX)) ) ? //if no QR code has been entered by the user, the default device name is the headset prefix
                         null : deviceQrCode )
-                .maxScanDuration(MAXIMUM_SCAN_DURATION)
-                .scanDeviceType(deviceType);
+                .maxScanDuration(MAXIMUM_SCAN_DURATION);
 
         if(connectAudio)
-            builder.connectAudioIfDeviceCompatible();
+            builder.connectAudio();
 
         sdkClient.connectBluetooth(builder.create());
     }

@@ -333,7 +333,7 @@ public class DeviceActivity extends AppCompatActivity {
             public void onClick(View v) {
                 if(!isStreaming) {
                     startStream(new StreamConfig.Builder(eegListener)
-                            .useQualities()
+                            //.useQualities()
                             .create());
                 }else  //streaming is in progress : stopping streaming
                     stopStream(); // set false to isStreaming et null to the eegListener
