@@ -11,9 +11,10 @@
         android:layout_height="0dp"
         android:background="@color/light_blue"
         android:gravity="bottom|center_horizontal"
-        android:text="@string/connected_to"
+        android:text="@string/connected"
         android:textColor="@color/white"
         android:textSize="22sp"
+
         app:layout_constraintBottom_toBottomOf="@+id/guidelineBottomTitle"
         app:layout_constraintTop_toTopOf="parent" />
 
@@ -25,9 +26,10 @@
         android:gravity="top"
         android:text=""
         android:textAlignment="center"
-
         android:textSize="18sp"
-        app:layout_constraintTop_toBottomOf="@+id/titleConnect" />
+
+        app:layout_constraintTop_toBottomOf="@+id/titleConnect"
+        />
 
     <Button
         android:id="@+id/readBatteryButton"
@@ -51,8 +53,8 @@
         android:elevation="10dp"
         android:text="@string/disconnect"
         android:textColor="@color/white"
-
         android:textSize="12sp"
+
         app:layout_constraintTop_toTopOf="@+id/guidelineTopButton"
         app:layout_constraintBottom_toTopOf="@+id/guidelineBottomButton"
         app:layout_constraintEnd_toEndOf="@+id/guidelineEnd"
@@ -76,46 +78,18 @@
     </LinearLayout>
 
     <TextView
-        android:id="@+id/channel_1_quality"
+        android:id="@+id/qualities"
         android:layout_width="wrap_content"
         android:layout_height="0dp"
-        android:text="@string/channel_1_qc"
-        android:textColor="@color/white"
         android:gravity="center_vertical"
+        android:textColor="@color/white"
         android:textSize="18sp"
+        android:text="@string/click_start_stream"
         android:visibility="visible"
 
         app:layout_constraintBottom_toBottomOf="@+id/guidelineBottomQuality"
-        app:layout_constraintEnd_toStartOf="@+id/guidelineEndScanButton"
-        app:layout_constraintTop_toTopOf="@id/guidelineTopQuality" />
-
-    <TextView
-        android:id="@+id/titleEEGGraph"
-        android:layout_width="wrap_content"
-        android:layout_height="0dp"
-        android:text="@string/title_graph_eeg"
-        android:textColor="@color/white"
-        android:gravity="center_vertical"
-        android:visibility="gone"
-        android:textSize="18sp"
-
-        app:layout_constraintBottom_toBottomOf="@+id/guidelineBottomQuality"
-        app:layout_constraintEnd_toEndOf="@+id/guidelineEnd"
+        app:layout_constraintEnd_toStartOf="@+id/guidelineEnd"
         app:layout_constraintStart_toStartOf="@+id/guidelineStart"
-        app:layout_constraintTop_toTopOf="@id/guidelineTopQuality" />
-
-    <TextView
-        android:id="@+id/channel_2_quality"
-        android:layout_width="wrap_content"
-        android:layout_height="0dp"
-        android:text="@string/channel_2_qc"
-        android:textColor="@color/white"
-        android:textSize="18sp"
-        android:gravity="center_vertical"
-        android:visibility="visible"
-
-        app:layout_constraintBottom_toBottomOf="@+id/guidelineBottomQuality"
-        app:layout_constraintStart_toStartOf="@+id/guidelineStartCancelButton"
         app:layout_constraintTop_toTopOf="@id/guidelineTopQuality" />
 
     <com.github.mikephil.charting.charts.LineChart
@@ -126,9 +100,7 @@
         app:layout_constraintTop_toBottomOf="@id/channels"
         app:layout_constraintStart_toStartOf="@+id/guidelineStart"
         app:layout_constraintEnd_toEndOf="@+id/guidelineEnd"
-        app:layout_constraintBottom_toBottomOf="@id/guidelineBottomChannels"
-        />
-
+        app:layout_constraintBottom_toBottomOf="@id/guidelineBottomChannels" />
 
     <Button
         android:id="@+id/startStopStreamingButton"
@@ -143,6 +115,7 @@
         app:layout_constraintEnd_toEndOf="@+id/guidelineStartStartStop"
         app:layout_constraintStart_toStartOf="@+id/guidelineEndStartStop"
         app:layout_constraintTop_toTopOf="@+id/guidelineBottomChannels" />
+
 
     <!-- VERTICAL GUIDELINES-->
 

@@ -1,19 +1,21 @@
 <resources>
-    <string name="app_name">SDK Application</string>
+    <string name="app_name">SDK Demo Application</string>
 
     <string name="connect">Connect</string>
     <string name="disconnect">Disconnect</string>
     <string name="start">Start</string>
-    <string name="scan">Find a device</string>
-    <string name="scanAll">Find all devices</string>
+    <string name="find_device">Find a device</string>
     <string name="cancel">Cancel</string>
 
     <string name="device_name">Enter a device name</string>
+    <string name="device_qrcode">Enter a device QR code</string>
+    <string name="bluetooth_audio_streaming">Bluetooth Audio Streaming</string>
+
     <string name="start_streaming">Start Streaming</string>
     <string name="stop_streaming">Stop Streaming</string>
     <string name="read_battery">Get Battery Level</string>
 
-    <string name="connected_to">CONNECTED</string>
+    <string name="connected">CONNECTED</string>
     <string name="welcome">WELCOME</string>
 
     <string name="scan_in_progress">Scan in progress </string>
@@ -27,13 +29,17 @@
     <string name="wrong_device_name">Wrong name : must contains 10 digits </string>
     <string name="disconnected_headset">The headset have been disconnected </string>
     <string name="no_connected_headset">No connected headset </string>
+    <string name="error_read_battery">An error occurred : impossible to get the battery level</string>
 
-    <string name="title_graph_eeg">Your signal </string>
-
+    <string name="title_graph_eeg">Raw signals</string>
+    
     <string name="channel_1_qc">Channel 1 Quality : </string>
     <string name="channel_2_qc">Channel 2 Quality : </string>
-    <string name="channel1">Channel 1</string>
-    <string name="channel2">Channel 2</string>
-    <string name="error_read_battery">An error occured : impossible to get the battery level</string>
+    <string name="channel">Channel</string>
+    <string name="channel_1">Channel 1 : P3</string>
+    <string name="channel_2">Channel 2 : P4</string>
+    <string name="status">Triggers</string>
+    <string name="quality">Q</string>
+    <string name="click_start_stream">Click on START STREAMING</string>
 
 </resources>
