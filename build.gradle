@@ -19,11 +19,12 @@ allprojects {
         google()
         jcenter()
         maven { url 'https://jitpack.io' }
-        maven{
-            url urlToReplace
+        maven {
+            url 'https://package.mybraintech.com/repository/maven-public/'
+
             credentials {
-                username usernameToReplace
-                password passwordToReplace
+                username 'sdk'
+                password 'MBTSDK2019'
             }
         }
     }

@@ -32,9 +32,11 @@ import engine.MbtClient;
 import engine.SimpleRequestCallback;
 import engine.clientevents.BaseError;
 
+import engine.clientevents.BasicError;
 import engine.clientevents.BluetoothStateListener;
+import engine.clientevents.ConfigError;
 import features.MbtDeviceType;
-import features.MbtFeatures;
+
 
 import static features.MbtFeatures.MELOMIND_DEVICE_NAME_PREFIX;
 import static features.MbtFeatures.QR_CODE_NAME_PREFIX;
@@ -147,7 +149,7 @@ public class HomeActivity extends AppCompatActivity{
          * If a device is connecting (or is connected), its data are bundled in the {@link MbtDevice} device object.
          */
         @Override
-        public void onNewState(BtState newState) {
+        public void onNewState(BtState newState, MbtDevice device) {
             if(newState.equals(BtState.READING_SUCCESS)){
                 sdkClient.requestCurrentConnectedDevice(new SimpleRequestCallback<MbtDevice>() {
                     @Override
@@ -176,7 +178,7 @@ public class HomeActivity extends AppCompatActivity{
          * The connected device data are bundled in the {@link MbtDevice} device object.
          */
         @Override
-        public void onDeviceConnected() {
+        public void onDeviceConnected(MbtDevice connectedDevice) {
             toast.cancel();
             closeCurrentActivity();
         }
@@ -186,7 +188,7 @@ public class HomeActivity extends AppCompatActivity{
          * The disconnected device data are bundled in the {@link MbtDevice} device object.
          */
         @Override
-        public void onDeviceDisconnected() {
+        public void onDeviceDisconnected(MbtDevice disconnectedDevice) {
             if(!toast.getView().isShown())
                 notifyUser(getString(R.string.no_connected_headset));
             if(isCancel)
@@ -415,7 +417,16 @@ public class HomeActivity extends AppCompatActivity{
         if(connectAudio)
             builder.connectAudio();
 
-        sdkClient.connectBluetooth(builder.create());
+        MbtDeviceType deviceType = null;
+        if(deviceName.startsWith(MELOMIND_DEVICE_NAME_PREFIX))
+            deviceType = MbtDeviceType.MELOMIND;
+        if(deviceName.startsWith(VPRO_DEVICE_NAME_PREFIX))
+            deviceType = MbtDeviceType.VPRO;
+
+        if(deviceType != null)
+            sdkClient.connectBluetooth(builder.createForDevice(deviceType));
+        else
+            notifyUser(ConfigError.ERROR_INVALID_PARAMS.getMessage()+ getString(R.string.error_unknown_device));
     }
 
     /**

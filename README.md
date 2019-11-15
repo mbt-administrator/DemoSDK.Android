@@ -1,10 +1,6 @@
-USER GUIDE
+# USER GUIDE
 
-# How to install and use the myBrain Technologies’ SDK in your project
-
-------
-
-
+# How to install and use the SDK in your project
 
 ## I. Overview
 
@@ -32,7 +28,7 @@ This library is currently distributed as a .aar file. Its content is obfuscated.
 
 ------
 
-The current version of the SDK is 2.1.1. Further updates will be released in the following months with more features.
+The current version of the SDK is 2.2.1. Further updates will be released in the following months with more features.
 
 Using the My Brain Technologies’ SDK requires to install an IDE for developing Android applications.
 *Note : this document explains how to install the SDK on Android Studio IDE only.*
@@ -61,6 +57,7 @@ The main features offered by the SDK are listed below.
 - Muscular artefacts detection*
 - DC Offset & Saturation measurement*
 - Relaxation index computation*
+- Signal Bandpass filter*
 
 ### Device
 
@@ -70,7 +67,12 @@ The main features offered by the SDK are listed below.
 - Gain*
 - DC offset*
 - Saturation*
+- Sampling rate*
 - Firmware update*
+
+### Recording
+
+- Recording of the EEG and associated data in JSON files.
 
 ### Synchronisation
 
@@ -96,7 +98,7 @@ This tutorial contains instructions on how to create your own project, install t
 
 ##### Request the mandatory permissions
 
-The SDK relies on Bluetooth Low Energy scanner. From Android 6, the Bluetooth is considered as a location technology and Bluetooth devices addresses can't be scanned without GPS. So it is necessary to request the location permission for using Bluetooth features. To do so, add the following code :
+The SDK relies on Bluetooth Low Energy scanner. From Android 6, the Bluetooth is considered as a location technology and Bluetooth devices addresses can't be scanned without GPS. So it is necessary to request the location permission for using Bluetooth features. To do so, add the following code in your AndroidManifest.xml file :
 
 ```
 <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
@@ -117,10 +119,10 @@ Inside the *build.gradle* file located at the **root** of your project folder, a
 ```
 repositories{
     maven{
-        url 'https://package.mybraintech.com/repository/maven-public/'
+        url urlToReplace
         credentials {
-            username 'sdk'
-            password 'MBTSDK2019'
+            username usernameToReplace
+            password passwordToReplace
         }
     }
 }
@@ -138,11 +140,11 @@ android {
 }
 ```
 
-Add the following dependency to your dependencies list. If the `2.1.1` version is not the last available version, replace `2.1.1` with the last version of the SDK:
+Add the following dependency to your dependencies list. If the `2.2.1` version is not the last available version, replace `2.2.1` with the last version of the SDK:
 
 ```
-implementation 'mybraintech.com:sdk-lite:2.1.1'
-implementation 'mybraintech.com:sdk-lite:2.1.1:javadoc'
+implementation 'mybraintech.com:sdk-lite:2.2.1'
+implementation 'mybraintech.com:sdk-lite:2.2.1:javadoc'
 implementation 'com.android.support:appcompat-v7:28.0.0'
 ```
 
@@ -222,10 +224,10 @@ The `ConnectionStateListener`Object provides 3 callbacks :
 ConnectionStateListener connectionStateListener = new ConnectionStateListener(){
 
 @Override
-public void onDeviceConnected() {}
+public void onDeviceConnected(Mbtdevice connectedDevice) {}
 
 @Override
-public void onDeviceDisconnected() {}
+public void onDeviceDisconnected(Mbtdevice disconnectedDevice) {}
 
 @Override
 public void onError(BaseError error, String additionalInfo) {}
@@ -253,13 +255,13 @@ The `BluetoothStateListener` Object provided 4 callbacks :
 BluetoothStateListener bluetoothStateListener = new BluetoothStateListener(){
 
 @Override
-public void onNewState(BtState newState) {}
+public void onNewState(BtState newState, Mbtdevice device) {}
 
 @Override
-public void onDeviceConnected() {}
+public void onDeviceConnected(Mbtdevice connectedDevice) {}
 
 @Override
-public void onDeviceDisconnected() {}
+public void onDeviceDisconnected(Mbtdevice disconnectedDevice) {}
 
 @Override
 public void onError(BaseError error, String additionalInfo) {}
@@ -278,11 +280,11 @@ By default, the current state is `BtState.IDLE`.
 Then you need to initialize the connection configuration by creating an instance of the `ConnectionConfig` Object. This instance must be initialized by calling the `ConnectionConfig` Builder whose only mandatory parameter is a non null instance of a`ConnectionStateListener` or `BluetoothStateListener` Object.
 
 ```
-ConnectionConfig connectionConfig = new ConnectionConfig.Builder(bluetoothStateListener).create();
+ConnectionConfig connectionConfig = new ConnectionConfig.Builder(bluetoothStateListener).createForDevice();
 
  or
 
- ConnectionConfig connectionConfig = new ConnectionConfig.Builder(connectionStateListener).create();
+ ConnectionConfig connectionConfig = new ConnectionConfig.Builder(connectionStateListener).createForDevice();
 ```
 
  Moreover, you can specify some optional parameters :
@@ -301,6 +303,8 @@ ConnectionConfig connectionConfig = new ConnectionConfig.Builder(bluetoothStateL
 
 - `mtu(int mtu)` * : the maximum transmission unit is the maximum size of the data packet sent by the headset to the SDK. This value is updated during the connection procress and can't be changed once the device is connected. A minimum value of **23** and a maximum value of **121** are mandatory. If you do not specify `mtu`in your `ConnectionConfig` builder, the mtu is set to 47.
 
+- `createForDevice(MbtDeviceType deviceType)` * : the device type can be MELOMIND or VPRO.
+
 Here is a full example of connection to a Melomind headset whose name is `melo_0123456789`, with audio stream option enabled :
 
 ```
@@ -309,13 +313,13 @@ MbtClient sdkClient = MbtClient.getClientInstance();
 BluetoothStateListener bluetoothStateListener = new BluetoothStateListener(){
 
 @Override
-public void onNewState(BtState newState) {}
+public void onNewState(BtState newState, Mbtdevice device) {}
 
 @Override
-public void onDeviceConnected() {}
+public void onDeviceConnected(Mbtdevice connectedDevice) {}
 
 @Override
-public void onDeviceDisconnected() {}
+public void onDeviceDisconnected(Mbtdevice disconnectedDevice) {}
 
 @Override
 public void onError(BaseError error, String additionalInfo) {}
@@ -326,7 +330,7 @@ ConnectionConfig connectionConfig = new ConnectionConfig.Builder(bluetoothStateL
 .deviceName(“melo_0123456789”)
 .maxScanDuration(20000)
 .connectAudio()
-.create();
+.createForDevice();
 
 sdkClient.connectBluetooth(connectionConfig);
 ```
@@ -392,7 +396,7 @@ The `onNewStreamState` callback returns the current EEG streaming state. The dif
 Then you need to create a non null instance of the `StreamConfig` Object. This instance must be initialized by calling the `StreamConfig` Builder whose only mandatory parameter is a non null instance of a `EegListener` Object.
 
 ```
-     StreamConfig streamConfig = new StreamConfig.Builder(eegListener).create();
+     StreamConfig streamConfig = new StreamConfig.Builder(eegListener).createForDevice();
 ```
 
 Moreover, you can specify some optional parameters :
@@ -402,16 +406,20 @@ Moreover, you can specify some optional parameters :
 
 *Note : This value is in milliseconds.*
 
+- `configureAcquisitionFromDeviceCommand(DeviceStreamingCommands... deviceCommands)` * : you can send commands to change the headset device notch filter, gain, or enable DC Offset, saturation and triggers detection before starting the stream. You can send one or more commands by separating them with a comma in the parameters. If you do not specify any `configureAcquisitionFromDeviceCommand` in your `StreamConfig` builder, the default filter, gain are used and DC offset, saturation and triggers are not detected.
+- `streamOverOSC(SynchronisationConfig.OSC config)` * : you can stream the EEG packet data over OSC. The SynchronisationConfig.OSC `config` is the OSC configuration Object.  It provides some setters to specify the data to stream and the network parameters.
+- `createForDevice(MbtDeviceType deviceType)` * : the device type can be MELOMIND or VPRO.
+
+To stream over OSC, you need to create a non null instance of the `SynchronisationConfig.OSC` Object. This instance must be initialized by calling the `SynchronisationConfig.OSC` Builder.
 You can specify some parameters :
 
 - `port(int port)` * : the SDK streams the data to the specified port. Default value is 8000 if you don't specify any value.
 - `ipAddress(String ipAddress)` * : the SDK streams the data to the specified computer identified by its IP address. If you don't know your computer IP address, you can open a command line window and type "ipconfig".
 - `streamRawEeg()` * : the SDK streams the EEG raw data over OSC. Your OSC receiver has to listen the following address to get the raw EEG : /raweeg. 
 - `streamQualities()` * : the SDK streams the EEG qualities over OSC. Your OSC receiver has to listen the following address to get the qualities : /quality. 
+- `streamStatus()` * : the SDK streams the triggers status over OSC. Your OSC receiver has to listen the following address to get the status : /status. 
 - `streamFeature(Feature feature)` * : the SDK streams a single Frequency band feature over OSC. Your OSC receiver has to listen the following address to get the feature : /feature/frequencyBand/featureType. You must replace frequencyBand with the name of the frequency band you're interested in and featureName with the type of feature you're interested in. For example to get the alpha power, the address will be : /feature/alpha/power. 
 - `streamFeatures(Features… features)` * : the SDK streams several Frequency band features over OSC. Each feature to stream can be separated with a comma, or an array of Feature object can also be passed.
-- `configureAcquisitionFromDeviceCommand(DeviceStreamingCommands... deviceCommands)` * : you can send commands to change the headset device notch filter, gain, or enable DC Offset, saturation and triggers detection before starting the stream. You can send one or more commands by separating them with a comma in the parameters. If you do not specify any `configureAcquisitionFromDeviceCommand` in your `StreamConfig` builder, the default filter, gain are used and DC offset, saturation and triggers are not detected.
-- `streamOverOSC(SynchronisationConfig.OSC config)` * : you can stream the EEG packet data over OSC. The SynchronisationConfig.OSC `config` is the OSC configuration Object.  It provides some setters to specify the data to stream and the network parameters. Use the `SynchronisationConfig.OSC.Builder` to create the instance.
 
 Here is a full example of streaming EEG data when a Melomind headset is connected :
 
@@ -435,21 +443,21 @@ StreamConfig streamConfig = new StreamConfig.Builder(eegListener)
     new DeviceStreamingCommands.AmplifierGain(AmpGainConfig.AMP_GAIN_X12_DEFAULT),
     new DeviceStreamingCommands.NotchFilter(FilterConfig.NOTCH_FILTER_50HZ)
     new DeviceStreamingCommands.Triggers(true))
-.create();
+.createForDevice();
 
 BluetoothStateListener bluetoothStateListener = new BluetoothStateListener(){ 
 
 @Override
-public void onNewState(BtState newState) {}
+public void onNewState(BtState newState, Mbtdevice device) {}
 
 @Override
 
-public void onDeviceConnected() {
+public void onDeviceConnected(Mbtdevice connectedDevice) {
     sdkClient.startStream(streamConfig);
 }
 
 @Override
-public void onDeviceDisconnected() {}
+public void onDeviceDisconnected(Mbtdevice disconnectedDevice) {}
 
 @Override
 public void onError(BaseError error, String additionalInfo) {}
@@ -460,7 +468,7 @@ ConnectionConfig connectionConfig = new ConnectionConfig.Builder(bluetoothStateL
 .deviceName(“melo_0123456789”)
 .maxScanDuration(20000)
 .connectAudio()
-.create();
+.createForDevice();
 
 sdkClient.connectBluetooth(connectionConfig);
 
@@ -552,6 +560,22 @@ This method stops to transmit notification to the application so that no EEG dat
 
 *Note: You should only call this method if a streaming has been started and if the application is connected to a headset.*
 
+###### BANDPASS FILTER
+
+For applying a bandpass filter to a EEG signal, you need to call the following method:
+
+```
+sdkClient.bandpassFilter(float minFrequency, float maxFrequency, int size, float[] signalToFilter, SimpleRequestCallback<float[]> resultCallback)
+```
+
+**Parameters**
+
+> `minFrequency` is the minimum bound of the bandpass filter : frequencies under this minimum will be rejected.
+> `maxFrequency` is the maximum bound of the bandpass filter : frequencies above this maximum will be rejected.
+> `size` is the size of the input signal data
+> `signalToFilter` is the EEG signal of a single channel
+> `resultCallback` is a callback that returns the resulting filtered signal. It returns `null` if the `signalToFilter` is null or empty, or if the size is lower than 0.
+
 ##### Device Features
 
 Information and configuration relative to the headset are managed through the use of the Device features. It allows you to read the battery level and change configuration of some filters, gain and other parameters.
@@ -584,6 +608,7 @@ DeviceBatteryListener deviceBatteryListener = new DeviceBatteryListener() {
     @Override
     public void onError(BaseError error, String additionalInfo) {}
 };
+
 ```
 
  The `onError()` method will be called if an error that affects the transfer of the battery level.
@@ -609,15 +634,15 @@ DeviceBatteryListener deviceBatteryListener = new DeviceBatteryListener() {
 BluetoothStateListener bluetoothStateListener = new BluetoothStateListener(){
 
 @Override
-public void onNewState(BtState newState) {}
+public void onNewState(BtState newState, Mbtdevice device) {}
 
 @Override
-public void onDeviceConnected() {
+public void onDeviceConnected(Mbtdevice connectedDevice) {
     sdkClient.readBattery(deviceBatteryListener)
 }
 
 @Override
-public void onDeviceDisconnected() {}
+public void onDeviceDisconnected(Mbtdevice disconnectedDevice) {}
 
 @Override
 public void onError(BaseError error, String additionalInfo) {}
@@ -628,9 +653,11 @@ ConnectionConfig connectionConfig = new ConnectionConfig.Builder(bluetoothStateL
 .deviceName(“melo_0123456789”)
 .maxScanDuration(20000)
 .connectAudio()
-.create();
+.createForDevice();
 
 sdkClient.connectBluetooth(connectionConfig);
+
+
 
 
 ```
@@ -641,6 +668,8 @@ To get the connected headset information, you need to call the following method:
 
 ```
 sdkClient.requestCurrentConnectedDevice(simpleRequestCallback)
+
+
 
 ```
 
@@ -660,6 +689,8 @@ SimpleRequestCallback<MbtDevice> simpleRequestCallback = new SimpleRequestCallba
             }
 };
 
+
+
 ```
 
 The `onRequestComplete()` method returns a null `device` if no headset is connected.
@@ -674,10 +705,10 @@ MbtClient sdkClient = MbtClient.getClientInstance();
 BluetoothStateListener bluetoothStateListener = new BluetoothStateListener(){ 
 
 @Override
-public void onNewState(BtState newState) {}
+public void onNewState(BtState newState, Mbtdevice device) {}
 
 @Override
-public void onDeviceConnected() {
+public void onDeviceConnected(Mbtdevice connectedDevice) {
     sdkClient.requestCurrentConnectedDevice(new SimpleRequestCallback<MbtDevice>() {
             @Override
             public void onRequestComplete(MbtDevice device) {
@@ -689,7 +720,7 @@ public void onDeviceConnected() {
 
 
 @Override 
-public void onDeviceDisconnected() {}
+public void onDeviceDisconnected(Mbtdevice disconnectedDevice) {}
 
 @Override 
 public void onError(BaseError error, String additionalInfo) {}
@@ -700,9 +731,11 @@ ConnectionConfig connectionConfig = new ConnectionConfig.Builder(bluetoothStateL
 .deviceName(“melo_0123456789”)
 .maxScanDuration(20000)
 .connectAudio()
-.create();
+.createForDevice();
 
 sdkClient.connectBluetooth(connectionConfig);
+
+
 
 
 ```
@@ -716,6 +749,8 @@ To change the serial number of the connected headset, you need to call the follo
 
 ```
 sdkClient.updateSerialNumber(serialNumber, commandCallback)
+
+
 
 ```
 
@@ -734,10 +769,10 @@ MbtClient sdkClient = MbtClient.getClientInstance();
 BluetoothStateListener bluetoothStateListener = new BluetoothStateListener(){
 
 @Override
-public void onNewState(BtState newState) {}
+public void onNewState(BtState newState, Mbtdevice device) {}
 
 @Override
-public void onDeviceConnected() {
+public void onDeviceConnected(Mbtdevice connectedDevice) {
 
     sdkClient.updateSerialNumber("987654321", new CommandCallback<byte[]>() {
             @Override
@@ -753,7 +788,7 @@ public void onDeviceConnected() {
 }
 
 @Override
-public void onDeviceDisconnected() {}
+public void onDeviceDisconnected(Mbtdevice disconnectedDevice) {}
 
 @Override
 public void onError(BaseError error, String additionalInfo) {}
@@ -768,6 +803,8 @@ ConnectionConfig connectionConfig = new ConnectionConfig.Builder(bluetoothStateL
 sdkClient.connectBluetooth(connectionConfig);
 
 
+
+
 ```
 
 ###### CHANGING EXTERNAL NAME *
@@ -779,6 +816,8 @@ To change the external name of the connected headset, you need to call the follo
 
 ```
 sdkClient.updateExternalName(externalName, commandCallback)
+
+
 
 ```
 
@@ -797,10 +836,10 @@ MbtClient sdkClient = MbtClient.getClientInstance();
 BluetoothStateListener bluetoothStateListener = new BluetoothStateListener(){
 
 @Override
-public void onNewState(BtState newState) {}
+public void onNewState(BtState newState, Mbtdevice device) {}
 
 @Override
-public void onDeviceConnected() {
+public void onDeviceConnected(Mbtdevice connectedDevice) {
 
     sdkClient.updateExternalName("MM12345678", new CommandCallback<byte[]>() {
             @Override
@@ -816,7 +855,7 @@ public void onDeviceConnected() {
 }
 
 @Override
-public void onDeviceDisconnected() {}
+public void onDeviceDisconnected(Mbtdevice disconnectedDevice) {}
 
 @Override
 public void onError(BaseError error, String additionalInfo) {}
@@ -831,6 +870,8 @@ ConnectionConfig connectionConfig = new ConnectionConfig.Builder(bluetoothStateL
 sdkClient.connectBluetooth(connectionConfig);
 
 
+
+
 ```
 
 ###### CONNECT AUDIO *
@@ -839,6 +880,8 @@ To stream audio using Bluetooth after the Bluetooth connection, you need to call
 
 ```
 sdkClient.connectAudio(commandCallback)
+
+
 
 ```
 
@@ -863,10 +906,10 @@ MbtClient sdkClient = MbtClient.getClientInstance();
 BluetoothStateListener bluetoothStateListener = new BluetoothStateListener(){
 
 @Override
-public void onNewState(BtState newState)  {}
+public void onNewState(BtState newState, Mbtdevice device)  {}
 
 @Override
-public void onDeviceConnected()  {
+public void onDeviceConnected(Mbtdevice connectedDevice)  {
 
     sdkClient.connectAudio(new CommandCallback<byte[]>() {
            @Override
@@ -882,7 +925,7 @@ public void onDeviceConnected()  {
 }
 
 @Override
-public void onDeviceDisconnected()  {}
+public void onDeviceDisconnected(Mbtdevice disconnectedDevice)  {}
 
 @Override
 public void onError(BaseError error, String additionalInfo) {}
@@ -896,6 +939,8 @@ ConnectionConfig connectionConfig = new ConnectionConfig.Builder(bluetoothStateL
 sdkClient.connectBluetooth(connectionConfig);
 
 
+
+
 ```
 
 ###### DISCONNECT AUDIO *
@@ -904,6 +949,8 @@ To disconnect audio on a connected headset, you need to call the following metho
 
 ```
 sdkClient.disconnectAudio(requestCallback)
+
+
 
 ```
 
@@ -924,10 +971,10 @@ MbtClient sdkClient = MbtClient.getClientInstance();
 BluetoothStateListener bluetoothStateListener = new BluetoothStateListener(){
 
 @Override
-public void onNewState(BtState newState) {}
+public void onNewState(BtState newState, Mbtdevice device) {}
 
 @Override
-public void onDeviceConnected() {
+public void onDeviceConnected(Mbtdevice connectedDevice) {
 
     sdkClient.disconnectAudio(new CommandCallback<byte[]>() {
            @Override
@@ -943,7 +990,7 @@ public void onDeviceConnected() {
 }
 
 @Override
-public void onDeviceDisconnected() {}
+public void onDeviceDisconnected(Mbtdevice disconnectedDevice) {}
 
 @Override
 public void onError(BaseError error, String additionalInfo) {}
@@ -958,6 +1005,8 @@ ConnectionConfig connectionConfig = new ConnectionConfig.Builder(bluetoothStateL
 sdkClient.connectBluetooth(connectionConfig);
 
 
+
+
 ```
 
 ###### REBOOT HEADSET *
@@ -966,6 +1015,8 @@ To reboot a connected headset, you need to call the following method:
 
 ```
 sdkClient.rebootDevice(commandCallback)
+
+
 
 ```
 
@@ -983,10 +1034,10 @@ MbtClient sdkClient = MbtClient.getClientInstance();
 BluetoothStateListener bluetoothStateListener = new BluetoothStateListener(){
 
 @Override
-public void onNewState(BtState newState)  {}
+public void onNewState(BtState newState, Mbtdevice device)  {}
 
 @Override
-public void onDeviceConnected()  {
+public void onDeviceConnected(Mbtdevice connectedDevice)  {
 
     sdkClient.rebootDevice(new CommandCallback<byte[]>() {
             @Override
@@ -997,7 +1048,7 @@ public void onDeviceConnected()  {
 }
 
 @Override
-public void onDeviceDisconnected()  {}
+public void onDeviceDisconnected(Mbtdevice disconnectedDevice)  {}
 
 @Override
 public void onError(BaseError error, String additionalInfo) {}
@@ -1012,6 +1063,8 @@ ConnectionConfig connectionConfig = new ConnectionConfig.Builder(bluetoothStateL
 sdkClient.connectBluetooth(connectionConfig);
 
 
+
+
 ```
 
 ###### GET SYSTEM STATUS *
@@ -1020,6 +1073,8 @@ To get the device system status of the connected headset, you need to call the f
 
 ```
 sdkClient.getDeviceSystemStatus(requestCallback)
+
+
 
 ```
 
@@ -1041,10 +1096,10 @@ MbtClient sdkClient = MbtClient.getClientInstance();
 BluetoothStateListener bluetoothStateListener = new BluetoothStateListener(){
 
 @Override
-public void onNewState(BtState newState)  {}
+public void onNewState(BtState newState, Mbtdevice device)  {}
 
 @Override
-public void onDeviceConnected()  {
+public void onDeviceConnected(Mbtdevice connectedDevice)  {
 
     sdkClient.getDeviceSystemStatus(new CommandCallback<byte[]>() {
             @Override
@@ -1063,7 +1118,7 @@ public void onDeviceConnected()  {
 }
 
 @Override
-public void onDeviceDisconnected()  {}
+public void onDeviceDisconnected(Mbtdevice disconnectedDevice)  {}
 
 @Override
 public void onError(BaseError error, String additionalInfo) {}
@@ -1078,6 +1133,8 @@ ConnectionConfig connectionConfig = new ConnectionConfig.Builder(bluetoothStateL
 sdkClient.connectBluetooth(connectionConfig);
 
 
+
+
 ```
 
 ###### UPDATE FIRMWARE *
@@ -1086,6 +1143,8 @@ To upgrade or downgrade the firmware installed on the connected headset, you nee
 
 ```
 sdkClient.updateFirmware(firmwareVersion, stateListener)
+
+
 
 ```
 
@@ -1114,10 +1173,10 @@ MbtClient sdkClient = MbtClient.getClientInstance();
 BluetoothStateListener bluetoothStateListener = new BluetoothStateListener(){
 
 @Override
-public void onNewState(BtState newState)  {}
+public void onNewState(BtState newState, Mbtdevice device)  {}
 
 @Override
-public void onDeviceConnected()  {
+public void onDeviceConnected(Mbtdevice connectedDevice)  {
       sdkClient.updateFirmware(
       new FirmwareVersion("1.7.4"), new OADStateListener<BaseError>() {
              @Override
@@ -1137,12 +1196,14 @@ public void onDeviceConnected()  {
 }
 
 @Override
-public void onDeviceDisconnected()  {}
+public void onDeviceDisconnected(Mbtdevice disconnectedDevice)  {}
 
 @Override
 public void onError(BaseError error, String additionalInfo) {}
 
 };
+
+
 
 ```
 
@@ -1158,10 +1219,10 @@ MbtClient sdkClient = MbtClient.getClientInstance();
 BluetoothStateListener bluetoothStateListener = new BluetoothStateListener(){ 
 
 @Override
-public void onNewState(BtState newState) {}
+public void onNewState(BtState newState, Mbtdevice device) {}
 
 @Override
-public void onDeviceConnected() {
+public void onDeviceConnected(Mbtdevice connectedDevice) {
 
     sdkClient.updateSerialNumber("987654321", new CommandCallback<byte[]>() {
             @Override
@@ -1177,7 +1238,7 @@ public void onDeviceConnected() {
 }
 
 @Override 
-public void onDeviceDisconnected() {}
+public void onDeviceDisconnected(Mbtdevice disconnectedDevice) {}
 
 @Override 
 public void onError(BaseError error, String additionalInfo) {}
@@ -1188,11 +1249,84 @@ ConnectionConfig connectionConfig = new ConnectionConfig.Builder(bluetoothStateL
 .deviceName(“melo_0123456789”)
 .maxScanDuration(20000)
 .connectAudio()
-.create();
+.createForDevice();
 
 sdkClient.connectBluetooth(connectionConfig);
 
+
+
 ```
+
+##### Recording Features
+
+###### START RECORDING 
+
+To start saving the measured and computed data during in real time in a JSON file, you need to call the following method:
+
+```
+sdkClient.startRecord(Context context)
+
+
+```
+
+**Parameters**
+
+> `context` is the application context.
+
+This method save the data acquired from the moment your application calls `startRecord` to the moment it calls `stopRecord`.
+
+###### STOP RECORDING 
+
+To stop saving the measured and computed data during in real time in a JSON file, you need to call the following method:
+
+```
+sdkClient.stopRecord(RecordConfig recordConfig)
+
+
+```
+
+**Parameters**
+
+> `recordConfig` is the recording configuration Object.  It provides some setters to specify the recording parameters. Use the `RecordConfig.Builder` to create the instance.
+
+This method save the data acquired from the moment your application calls `startRecord` to the moment it calls `stopRecord`. 
+
+The JSON file is created when your application calls stopRecord, if you have called startRecord before.
+It means that no data can be recorded if you have not called `startRecord` before `stopRecord`.
+
+*Note: You should only call this method if a streaming has been started and if the application is connected to a headset.*
+
+To record data you need to create a non null instance of the `RecordConfig` Object. This instance must be initialized by calling the `RecordConfig` Builder.
+
+```
+     RecordConfig recordConfig = new RecordConfig.Builder().create();
+
+
+```
+
+Moreover, you can specify some optional parameters :
+
+- `folder(String folder)`  : the JSON file is stored in the folder specified in this parameters. The root directory is used to store the file if you do not specify `folder` in your `RecordConfig` builder.
+- `projectName(String projectName)`  : the JSON file name append your application name if you don't specify any `filename`. The name defined in your Manifest file for the attribute android:name is used if you do not specify `projectName` nor `filename` in your `RecordConfig` builder.
+- `subjectID(String subjectID)`  : the JSON file can store the subject ID and the file name can also append this ID if you don't specify any `filename`. "-" is used if you do not specify `subjectID` in your `RecordConfig` builder.
+- `condition(String condition)`  : the JSON file name can append an additional information that provide more details of the recording condition if you specify a `condition`. It doesn't append anything if you do not specify `condition` in your `RecordConfig` builder.
+- `filename(String filename) ` : the JSON file is created and renamed with the name specified in this parameters. The following format is used to name the file if you do not specify any `filename` in your `RecordConfig` builder : yyyy-MM-dd_HH-mm-ss.SSS-projectName-deviceName-subjectId-condition.json . 
+- `useInternalStorage() ` : the JSON file is stored in a specific folder (Internal Storage> Android> data > com.yourapplicationpackagename) if you specify `useInternalStorage`, where yourapplicationpackagename is the name of your package. It is also stored in this folder if you do not specify `useExternalStorage` nor `useInternalStorage` in your `RecordConfig` builder.
+- `useExternalStorage() ` : the JSON file is stored in the Android mobile root directory if you specify `useExternalStorage` in your `RecordConfig` builder. 
+- `timestamp(long timestamp) ` : a timestamp is stored in the JSON file and the file name can also append this timestamp if you specify `timestamp` in your `RecordConfig` builder. A default timestamp is automatically generated when `stopRecord` is called if you do not specify any `timestamp` in your `RecordConfig` builder.
+- `duration(int duration) ` : a maximum number of EEG packet can be stored in the JSON file if you specify `duration` in your `RecordConfig` builder. The number of EEG packet recorded is not restricted if you do not specify any `duration` in your `RecordConfig` builder.
+- `exerciseType(MelomindExerciseType exerciseType) ` : a type of Melomind exercise is stored in the JSON file if you specify `exerciseType` in your `RecordConfig` builder. No default exercise type is stored if you do not specify any `exerciseType` in your `RecordConfig` builder.
+- `recordType(RecordType recordType) ` : a type of task performed by the subject who's EEG is recorded is stored in the JSON file if you specify `recordType` in your `RecordConfig` builder. No default record type is stored if you do not specify any `recordType` in your `RecordConfig` builder.
+- `source(MelomindExerciseSource source) ` : a source of Melomind exercise is stored in the JSON file if you specify `source` in your `RecordConfig` builder. No default source is stored if you do not specify any `source` in your `RecordConfig` builder.
+- `enableMultipleRecordings() ` : several JSON files can be recorded together and have a common value for the `recordingNb` JSON field that matches the number of recorded files if you specify `enableMultipleRecordings` in your `RecordConfig` builder.
+- `bodyParameters(Bundle recordingParameters) ` : several additional data can be stored in the JSON file if you specify `bodyParameters` in your `RecordConfig` builder. The `recordingParameters` input bundles all these additional data to store. No default bundle is stored if you do not specify any `bodyParameters` in your `RecordConfig` builder.
+- `headerComments(ArrayList<Comment> comments) ` : a list of additional comments can be stored in the JSON file if you specify `headerComments` in your `RecordConfig` builder. For instance comments could be notes written by the people that have encountered events during the recording. No default comment is stored if you do not specify any `headerComments` in your `RecordConfig` builder.
+- `headerComment(Comment... comment) ` : a single comment or an array of comments can be stored in the JSON file if you specify `headerComment` in your `RecordConfig` builder. For instance comments could be notes written by the people that have encountered events during the recording. No default comment is stored if you do not specify any `headerComment` in your `RecordConfig` builder.
+- `acquisitionLocations(MbtAcquisitionLocations... acquisitionLocations) ` : the specified EEG electrodes locations are stored in the JSON file if you specify `acquisitionLocations` in your `RecordConfig` builder. Melomind default locations are P3 and P4.
+- `groundLocations(MbtAcquisitionLocations... groundLocations) ` : the specified ground electrodes locations are stored in the JSON file if you specify `groundLocations` in your `RecordConfig` builder. Melomind default ground location is M2 (mastoid).
+- `referenceLocations(MbtAcquisitionLocations... referenceLocations) ` : the specified reference electrodes locations are stored in the JSON file if you specify `referenceLocations` in your `RecordConfig` builder. Melomind default reference location is M1 (mastoid).
+
+
 
 ##### Synchronisation Features
 
@@ -1209,7 +1343,9 @@ To receive triggers that mark timestamps for significant events in the EEG signa
 ```
 sdkClient.startStream(new StreamConfig.Builder(eegListener)
                             .configureAcquisitionFromDeviceCommand(new DeviceStreamingCommands.Triggers(true))
-                            .create());
+                            .createForDevice());
+
+
 
 ```
 
@@ -1218,6 +1354,8 @@ To get the triggers, you need to call the following getter on the streamed EEG p
 
 ```
 mbtEEGPackets.getStatusData()
+
+
 
 
 ```
@@ -1241,10 +1379,10 @@ EegListener<BaseError> eegListener = new EegListener<BaseError>() {
 BluetoothStateListener bluetoothStateListener = new BluetoothStateListener(){
 
 @Override
-public void onNewState(BtState newState)  {}
+public void onNewState(BtState newState, Mbtdevice device)  {}
 
 @Override
-public void onDeviceConnected()  {
+public void onDeviceConnected(Mbtdevice connectedDevice)  {
 
     sdkClient.startStream(new StreamConfig.Builder(eegListener)
                             .configureAcquisitionFromDeviceCommand(new DeviceStreamingCommands.Triggers(true))
@@ -1252,7 +1390,7 @@ public void onDeviceConnected()  {
 }
 
 @Override
-public void onDeviceDisconnected()  {}
+public void onDeviceDisconnected(Mbtdevice disconnectedDevice)  {}
 
 @Override
 public void onError(BaseError error, String additionalInfo) {}
@@ -1265,6 +1403,8 @@ ConnectionConfig connectionConfig = new ConnectionConfig.Builder(bluetoothStateL
 .connectAudio();
 
 sdkClient.connectBluetooth(connectionConfig);
+
+
 
 ```
 
@@ -1295,7 +1435,7 @@ Here is the list of all the possible Bluetooth states that the `onNewState` call
 
 ------
 
-` DEVICE_FOUND`
+`DEVICE_FOUND`
 
 A device has been found during the scan. It can be a specific one if the user entered a device name in its connection configuration, or the first device found.
 
@@ -1319,52 +1459,52 @@ Retrieving the services that the connected headset deliver. This operation is in
 
 ------
 
-  `DISCOVERING_SUCCESS`
+`DISCOVERING_SUCCESS`
 
 Successfully received the services delivered by the connected headset.
 
 ------
 
- `READING_FIRMWARE_VERSION`
+`READING_FIRMWARE_VERSION`
 
 A request has been sent to the headset to get the first Device Information (Firmware version).
 This operation is included in the connection process to ensure that the received characteristics can be read by the SDK.
 
 ------
 
- `READING_FIRMWARE_VERSION_SUCCESS`
+`READING_FIRMWARE_VERSION_SUCCESS`
 
 The Firmware version has been successfully read.
 
 ------
 
-`    ` `READING_HARDWARE_VERSION`
+`READING_HARDWARE_VERSION`
 
 A request has been sent to the headset to get the Hardware version.
 This operation is included in the connection process to ensure that the received characteristics can be read by the SDK.
 
 ------
 
- `READING_HARDWARE_VERSION_SUCCESS`
+`READING_HARDWARE_VERSION_SUCCESS`
 
 The Hardware version has been successfully read.
 
 ------
 
-`    ` `READING_SERIAL_NUMBER`
+`READING_SERIAL_NUMBER`
 
 A request has been sent to the headset to get the Serial number.
 This operation is included in the connection process to ensure that the received characteristics can be read by the SDK.
 
 ------
 
- `READING_SERIAL_NUMBER_SUCCESS`
+`READING_SERIAL_NUMBER_SUCCESS`
 
 The Serial Number has been successfully read.
 
 ------
 
- `READING_MODEL_NUMBER`
+`READING_MODEL_NUMBER`
 
 A request has been sent to the headset to get the Model number.
 This operation is included in the connection process to ensure that the received characteristics can be read by the SDK.
@@ -1377,25 +1517,25 @@ The last Device Information (Model Number) has been successfully read.
 
 ------
 
- `BONDING`
+`BONDING`
 
  Exchanging and storing of the long term keys for the next times a connection is initiated between a mobile device and a headset.  This operation is included in the connection process only for headsets whose firmware version are higher than or equal to 1.7.0. Headsets whose firmware version are lower than 1.7.0 can not handle this operation so the bonding step is just skipped.
 
 ------
 
-  `BONDED`
+`BONDED`
 
 Headset has been successfully bonded with the mobile device.
 
 ------
 
-  `SENDIND_QR_CODE`
+`SENDIND_QR_CODE`
 
 Sending the QR Code as an external name to the headset.
 
 ------
 
-  `CONNECTED`
+`CONNECTED`
 
 Successfully connected for BLE or SPP streaming and ready to connect audio if the user requested it in its connection configuration.
 
@@ -1455,13 +1595,13 @@ The device does not have a Bluetooth interface or does not support Bluetooth Low
 
 ------
 
- `LOCATION_PERMISSION_NOT_GRANTED`
+`LOCATION_PERMISSION_NOT_GRANTED`
 
 Location is required in order to start the Low Energy scan. You need to grant permissions to access FINE or COARSE location.
 
 ------
 
-  `ANOTHER_DEVICE_CONNECTED`
+`ANOTHER_DEVICE_CONNECTED`
 
 Although android Bluetooth Low Energy supports multiple connection, we currently consider that only one connection at a time is possible. Instead of forcing the disconnection of the first device, it is preferable to notify user  with error state so that the user can choose if he wants to disconnect the already connected device or not.
 
@@ -1473,13 +1613,13 @@ Although android Bluetooth Low Energy supports multiple connection, we currently
 
 ------
 
-   `SCAN_FAILED_ALREADY_STARTED`
+`SCAN_FAILED_ALREADY_STARTED`
 
 The SDK failed to start scan as a scan is already running.
 
 ------
 
-  `SCAN_FAILURE`
+`SCAN_FAILURE`
 
 The SDK failed to start scan operation.
 
@@ -1646,320 +1786,190 @@ Stream has not correctly been started or stopped. Something went wrong.
 
 ### Errors
 
-```
-ERROR_NOT_CONNECTED
-
-
-```
+`ERROR_NOT_CONNECTED`
 
 No connected headset.
 
 ------
 
-```
-ERROR_ALREADY_SCANNING
-
-
-```
+`ERROR_ALREADY_SCANNING`
 
 Scanning already started.
 
 ------
 
-```
-ERROR_SCANNING_INTERRUPTED
-
-
-```
+`ERROR_SCANNING_INTERRUPTED`
 
 Bluetooth Scanning has been interrupted.
 
 ------
 
-```
-ERROR_SCANNING_TIMEOUT
-
-
-```
+`ERROR_SCANNING_TIMEOUT`
 
 Bluetooth scanning could not be completed within the permitted time.
 
 ------
 
-```
-ERROR_CONNECT_FAILED
-
-
-```
+`ERROR_CONNECT_FAILED`
 
 Bluetooth connection failed.
 
 ------
 
-```
-ERROR_ALREADY_CONNECTED_ANOTHER
-
-
-```
+`ERROR_ALREADY_CONNECTED_ANOTHER`
 
 Another device is already connected.
 
 ------
 
-```
-ERROR_ALREADY_CONNECTED_JACK
-
-
-```
+`ERROR_ALREADY_CONNECTED_JACK`
 
 Jack cable already connected.
 
 ------
 
-```
-ERROR_NOT_SUPPORTED
-
-
-```
+`ERROR_NOT_SUPPORTED`
 
 Bluetooth Low Energy not supported for this mobile device (incompatible Android OS version).
 
 ------
 
-```
-ERROR_SCANNING_FAILED
-
-
-```
+`ERROR_SCANNING_FAILED`
 
 Bluetooth Scanning failed.
 
 ------
 
-```
-ERROR_CONNECTION_INTERRUPTED
-
-
-```
+`ERROR_CONNECTION_INTERRUPTED`
 
 Bluetooth Connection has been interrupted.
 
 ------
 
-```
-ERROR_SETTINGS_INTERFACE_ACTION
-
-
-```
+`ERROR_SETTINGS_INTERFACE_ACTION`
 
 Bluetooth Audio Connection with an unpaired headset is not supported on your mobile. Please read the User Guide to connect Audio in a different way.
 
 ------
 
-```
-ERROR_FAIL_START_STREAMING
-
-
-```
+`ERROR_FAIL_START_STREAMING`
 
 Failed to start streaming.
 
 ------
 
-```
-ERROR_UNKNOWN
-
-
-```
+`ERROR_UNKNOWN`
 
 Unknown cause.
 
 ------
 
-```
-ERROR_INVALID_PARAMS
-
-
-```
+`ERROR_INVALID_PARAMS`
 
 Invalid configuration parameters.
 
 ------
 
-```
-ERROR_TIMEOUT_BATTERY
-
-
-```
+`ERROR_TIMEOUT_BATTERY`
 
 No received Battery Level value within the permitted time.
 
 ------
 
-```
-ERROR_DECODE_BATTERY
-
-
-```
+`ERROR_DECODE_BATTERY`
 
 Failed to decode battery level value.
 
 ------
 
-```
-ERROR_PREFIX_NAME
-
-
-```
+`ERROR_PREFIX_NAME`
 
 Invalid headset name : it must start with melo_ prefix.
 
 ------
 
-```
-ERROR_VPRO_INCOMPATIBLE
-
-
-```
+`ERROR_VPRO_INCOMPATIBLE`
 
 Feature not available for VPro headset.
 
 ------
 
-```
-ERROR_GPS_DISABLED
-
-
-```
+`ERROR_GPS_DISABLED`
 
 This operation could not be started : GPS disabled.
 
 ------
 
-```
-ERROR_LOCATION_PERMISSION
-
-
-```
+`ERROR_LOCATION_PERMISSION`
 
 This operation could not be started : Location permission not granted.
 
 ------
 
-```
-ERROR_BLUETOOTH_DISABLED
-
-
-```
+`ERROR_BLUETOOTH_DISABLED`
 
 This operation could not be started : Bluetooth is disabled.
 
-
-
 ------
 
-```
-ERROR_RECONNECT_FAILED
-
-
-```
+`ERROR_RECONNECT_FAILED`
 
 Incompatible firmware version : update is necessary.
 
 ------
 
-```
-ERROR_TIMEOUT_UPDATE
-
-
-```
+`ERROR_TIMEOUT_UPDATE`
 
 Firmware update could not be completed within the permitted time.
 
 ------
 
-```
-ERROR_INIT_FAILED
-
-
-```
+`ERROR_INIT_FAILED`
 
 Preparing OAD Transfer request failed.
 
 ------
 
-```
-ERROR_VALIDATION_FAILED
-
-
-```
+`ERROR_VALIDATION_FAILED`
 
 Firmware rejected the OAD update request.
 
 ------
 
-```
-ERROR_WRONG_FIRMWARE_VERSION
-
-
-```
+`ERROR_WRONG_FIRMWARE_VERSION`
 
 Current firmware version does not match the update version
 
 ------
 
-```
-ERROR_FIRMWARE_UPDATE_FAILED
-
-
-```
+`ERROR_FIRMWARE_UPDATE_FAILED`
 
 Firmware update failed or could not be completed within the permitted time.
 
 ------
 
-```
-ERROR_FIRMWARE_REJECTED_UPDATE
-
-
-```
+`ERROR_FIRMWARE_REJECTED_UPDATE`
 
 Firmware rejected the binary file that holds the firmware requested for an OAD update .
 
 ------
 
-```
-ERROR_INVALID_FIRMWARE_VERSION
-
-
-```
+`ERROR_INVALID_FIRMWARE_VERSION`
 
 Firmware version requested is invalid.
 
 ------
 
-```
-ERROR_TRANSFER_FAILED
-
-
-```
+`ERROR_TRANSFER_FAILED`
 
 OAD Transfer failed : corruption might occurred while transferring the binary file.
 
 ------
 
-```
-ERROR_LOST_CONNECTION
-
-
-```
+`ERROR_LOST_CONNECTION`
 
 Lost Headset connection during an OAD update.
 
 ------
 
-*Features only available on the Premium SDK version. Please send a message at contact@mybraintech.com to get more informations about the Premium SDK version.
-
-```
-
-```
+*Features only available on the Premium SDK version. Please send a message at sdk@mybraintech.com to get more information about the Premium SDK version.
