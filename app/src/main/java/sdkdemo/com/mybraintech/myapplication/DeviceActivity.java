@@ -24,6 +24,7 @@ import java.util.Objects;
 
 import config.StreamConfig;
 import core.bluetooth.BtState;
+import core.bluetooth.StreamState;
 import core.device.model.MbtDevice;
 import core.eeg.storage.MbtEEGPacket;
 import engine.MbtClient;
@@ -70,7 +71,7 @@ public class DeviceActivity extends AppCompatActivity {
     /**
      * Text view used to display the qualities of the channels in real time
      */
-    private TextView channelQualities;
+    private TextView eegGraphTitle;
 
     /**
      * Button used start or stop the real time EEG streaming.
@@ -170,7 +171,7 @@ public class DeviceActivity extends AppCompatActivity {
                 Toast.makeText(DeviceActivity.this, errorMessage, Toast.LENGTH_SHORT).show();
                 if(isStreaming) {
                     stopStream(); //streaming is stopped if an error occurred
-                    updateStreamButton();
+                    updateGraphTitle();
                 }
             }
 
@@ -197,6 +198,11 @@ public class DeviceActivity extends AppCompatActivity {
                 }
             }
 
+            @Override
+            public void onNewStreamState(@NonNull StreamState streamState) {
+
+            }
+
         };
     }
 
@@ -210,7 +216,7 @@ public class DeviceActivity extends AppCompatActivity {
              * Callback used to receive a notification when the Bluetooth connection state changes
              */
             @Override
-            public void onNewState(BtState newState) {
+            public void onNewState(BtState newState, MbtDevice device) {
 
             }
 
@@ -218,21 +224,16 @@ public class DeviceActivity extends AppCompatActivity {
              * Callback used to receive a notification when the Bluetooth connection is established
              */
             @Override
-            public void onDeviceConnected() {
+            public void onDeviceConnected(MbtDevice connectedDevice) {
                 isConnected = true;
-                sdkClient.requestCurrentConnectedDevice(new SimpleRequestCallback<MbtDevice>() {
-                    @Override
-                    public void onRequestComplete(MbtDevice device) {
-                        connectedDevice = device;
-                    }
-                });
+                DeviceActivity.this.connectedDevice = connectedDevice;
             }
 
             /**
              * Callback used to receive a notification when a connected headset is disconnected
              */
             @Override
-            public void onDeviceDisconnected() {
+            public void onDeviceDisconnected(MbtDevice disconnectedDevice) {
                 isConnected = false;
                 connectedDevice = null;
                 returnOnPreviousActivity();
@@ -305,7 +306,7 @@ public class DeviceActivity extends AppCompatActivity {
                      * @param newLevel is the current battery charge level
                      */
                     @Override
-                    public void onBatteryChanged(String newLevel) {
+                    public void onBatteryLevelReceived(String newLevel) {
                         notifyUser("Current battery level : "+newLevel+" %");
                     }
 
@@ -332,13 +333,14 @@ public class DeviceActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 if(!isStreaming) {
+                    updateGraphTitle(getString(R.string.starting_stream));
                     startStream(new StreamConfig.Builder(eegListener)
                             //.useQualities()
-                            .create());
+                            .createForDevice(connectedDevice.deviceType));
                 }else  //streaming is in progress : stopping streaming
                     stopStream(); // set false to isStreaming et null to the eegListener
 
-                updateStreamButton(); //update the UI text in both case according to the new value of isStreaming
+                updateGraphTitle(); //update the UI text in both case according to the new value of isStreaming
             }
         });
     }
@@ -367,9 +369,22 @@ public class DeviceActivity extends AppCompatActivity {
      * The stream button text is changed into "Stop Streaming" if streaming is started
      * or into "Start Streaming" if streaming is stopped
      */
-    private void updateStreamButton(){
-        startStopStreamingButton.setText((isStreaming ?
-                R.string.stop_streaming : R.string.start_streaming));
+    private void updateGraphTitle(){
+        startStopStreamingButton.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                startStopStreamingButton.setText((isStreaming ?
+                        R.string.stop_streaming : R.string.start_streaming));
+            }
+        }, isStreaming ? 0 : 1500);
+    }
+
+    /**
+     * Method called to update the text of the graph title with a new message
+     * @param message the message to display in the title
+     */
+    private void updateGraphTitle(String message){
+        eegGraphTitle.setText(message);
     }
 
     /**
@@ -435,7 +450,7 @@ public class DeviceActivity extends AppCompatActivity {
 
         eegGraph.invalidate();
 
-        channelQualities = findViewById(R.id.qualities);
+        eegGraphTitle = findViewById(R.id.qualities);
     }
 
     /**
@@ -460,7 +475,7 @@ public class DeviceActivity extends AppCompatActivity {
             if(qualityTextView != connectedDevice.getNbChannels()-1)//the channel qualities are separated by a vertical line
                 qualities.append(" | ");
         }
-        channelQualities.setText(qualities.toString());
+        updateGraphTitle(qualities.toString());
     }
 
     /**

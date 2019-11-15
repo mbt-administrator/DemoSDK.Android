@@ -30,6 +30,7 @@
     <string name="disconnected_headset">The headset have been disconnected </string>
     <string name="no_connected_headset">No connected headset </string>
     <string name="error_read_battery">An error occurred : impossible to get the battery level</string>
+    <string name="error_unknown_device">Unknown device</string>
 
     <string name="title_graph_eeg">Raw signals</string>
     
@@ -41,5 +42,6 @@
     <string name="status">Triggers</string>
     <string name="quality">Q</string>
     <string name="click_start_stream">Click on START STREAMING</string>
+    <string name="starting_stream">Starting…</string>
 
 </resources>
