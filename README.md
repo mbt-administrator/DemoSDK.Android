@@ -28,7 +28,7 @@ This library is currently distributed as a .aar file. Its content is obfuscated.
 
 ------
 
-The current version of the SDK is 2.2.1. Further updates will be released in the following months with more features.
+The current version of the SDK is 2.2.4. Further updates will be released in the following months with more features.
 
 Using the My Brain Technologies’ SDK requires to install an IDE for developing Android applications.
 *Note : this document explains how to install the SDK on Android Studio IDE only.*
@@ -140,11 +140,11 @@ android {
 }
 ```
 
-Add the following dependency to your dependencies list. If the `2.2.1` version is not the last available version, replace `2.2.1` with the last version of the SDK:
+Add the following dependency to your dependencies list. If the `2.2.4` version is not the last available version, replace `2.2.4` with the last version of the SDK:
 
 ```
-implementation 'mybraintech.com:sdk-lite:2.2.1'
-implementation 'mybraintech.com:sdk-lite:2.2.1:javadoc'
+implementation 'mybraintech.com:sdk-lite:2.2.4'
+implementation 'mybraintech.com:sdk-lite:2.2.4:javadoc'
 implementation 'com.android.support:appcompat-v7:28.0.0'
 ```
 
