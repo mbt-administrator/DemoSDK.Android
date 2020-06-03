@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:custom="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
@@ -120,42 +120,42 @@
     <!-- VERTICAL GUIDELINES-->
 
 
-    <android.support.constraint.Guideline
+    <androidx.constraintlayout.widget.Guideline
         android:id="@+id/guidelineStart"
         android:layout_width="1dp"
         android:layout_height="wrap_content"
         android:orientation="vertical"
         custom:layout_constraintGuide_percent="0.1" />
 
-    <android.support.constraint.Guideline
+    <androidx.constraintlayout.widget.Guideline
         android:id="@+id/guidelineEndScanButton"
         android:layout_width="1dp"
         android:layout_height="wrap_content"
         android:orientation="vertical"
         custom:layout_constraintGuide_percent="0.47" />
 
-    <android.support.constraint.Guideline
+    <androidx.constraintlayout.widget.Guideline
         android:id="@+id/guidelineStartCancelButton"
         android:layout_width="1dp"
         android:layout_height="wrap_content"
         android:orientation="vertical"
         custom:layout_constraintGuide_percent="0.53" />
 
-    <android.support.constraint.Guideline
+    <androidx.constraintlayout.widget.Guideline
         android:id="@+id/guidelineEndStartStop"
         android:layout_width="1dp"
         android:layout_height="wrap_content"
         android:orientation="vertical"
         custom:layout_constraintGuide_percent="0.3" />
 
-    <android.support.constraint.Guideline
+    <androidx.constraintlayout.widget.Guideline
         android:id="@+id/guidelineStartStartStop"
         android:layout_width="1dp"
         android:layout_height="wrap_content"
         android:orientation="vertical"
         custom:layout_constraintGuide_percent="0.7" />
 
-    <android.support.constraint.Guideline
+    <androidx.constraintlayout.widget.Guideline
         android:id="@+id/guidelineEnd"
         android:layout_width="1dp"
         android:layout_height="wrap_content"
@@ -165,28 +165,28 @@
 
     <!-- HORIZONTAL GUIDELINES-->
 
-    <android.support.constraint.Guideline
+    <androidx.constraintlayout.widget.Guideline
         android:id="@+id/guidelineBottomTitle"
         android:layout_width="1dp"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         custom:layout_constraintGuide_percent="0.06" />
 
-    <android.support.constraint.Guideline
+    <androidx.constraintlayout.widget.Guideline
         android:id="@+id/guidelineTopButton"
         android:layout_width="1dp"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         custom:layout_constraintGuide_percent="0.15" />
 
-    <android.support.constraint.Guideline
+    <androidx.constraintlayout.widget.Guideline
         android:id="@+id/guidelineBottomButton"
         android:layout_width="1dp"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         custom:layout_constraintGuide_percent="0.25" />
 
-    <android.support.constraint.Guideline
+    <androidx.constraintlayout.widget.Guideline
         android:id="@+id/guidelineTopQuality"
         android:layout_width="1dp"
         android:layout_height="wrap_content"
@@ -194,21 +194,21 @@
         app:layout_constraintGuide_begin="307dp"
         custom:layout_constraintGuide_percent="0.3" />
 
-    <android.support.constraint.Guideline
+    <androidx.constraintlayout.widget.Guideline
         android:id="@+id/guidelineBottomQuality"
         android:layout_width="1dp"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         custom:layout_constraintGuide_percent="0.38" />
 
-    <android.support.constraint.Guideline
+    <androidx.constraintlayout.widget.Guideline
         android:id="@+id/guidelineBottomChannels"
         android:layout_width="1dp"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         custom:layout_constraintGuide_percent="0.9" />
 
-    <android.support.constraint.Guideline
+    <androidx.constraintlayout.widget.Guideline
         android:id="@+id/guidelineBottomStartStop"
         android:layout_width="1dp"
         android:layout_height="wrap_content"
@@ -216,4 +216,4 @@
         custom:layout_constraintGuide_percent="0.99" />
 
 
-</android.support.constraint.ConstraintLayout>
+</androidx.constraintlayout.widget.ConstraintLayout>

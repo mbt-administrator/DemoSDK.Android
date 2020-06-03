@@ -8,8 +8,6 @@ import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.os.Build;
 import android.os.Bundle;
-import android.support.v4.app.ActivityCompat;
-import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
@@ -23,6 +21,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
 import core.bluetooth.BtState;
 import config.ConnectionConfig;
 import core.device.model.MbtDevice;
@@ -32,7 +32,6 @@ import engine.MbtClient;
 import engine.SimpleRequestCallback;
 import engine.clientevents.BaseError;
 
-import engine.clientevents.BasicError;
 import engine.clientevents.BluetoothStateListener;
 import engine.clientevents.ConfigError;
 import features.MbtDeviceType;
@@ -46,7 +45,7 @@ import static features.MbtFeatures.VPRO_DEVICE_NAME_PREFIX;
  * First View displayed when you launch the application.
  * Headset Bluetooth connection is established here.
  */
-public class HomeActivity extends AppCompatActivity{
+public class HomeActivity extends AppCompatActivity {
 
     /**
      * Maximum duration allocated to find a headset
